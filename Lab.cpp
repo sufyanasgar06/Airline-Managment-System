@@ -523,6 +523,94 @@ void PassengerRegistration() {
     cout << "\nIMPORTANT: Save your Passenger ID for login: " << newPassenger.id << "\n";
 }
 
+// ========== Admin Menu ==========
+
+        void adminMenu()
+        {
+        cout << "\n===== ADMIN PANEL =====\n";
+        cout << "1. Add Flight\n";
+        cout << "2. View Flights\n";
+        cout << "3. Update Flight\n";
+        cout << "4. Delete Flight\n";
+        cout << "5. View Bookings\n";
+        cout << "6. Logout\n";
+        }
+
+ // ========== Admin Login ==========
+
+        void adminLoginPanel() {
+        cout << "\n=== ADMIN LOGIN ===\n";
+
+        string username;
+        string password;
+
+        cout << "Enter Admin Username: ";
+        cin >> username;
+
+        cout << "Enter Admin Password: ";
+        cin >> password;
+
+        if (username == "admin" && password == "1234")
+        {
+        cout << "\nLogin successful! Welcome Admin!\n";
+        int choice;
+        do {
+        adminMenu();
+
+        cout << "Enter choice: ";
+        cin >> choice;
+
+        switch (choice) {
+        case 1:
+        {
+        // addFlight();
+        }
+        break;
+
+        case 2:
+        {
+        // viewFlights();
+        }
+        break;
+
+        case 3:
+        {
+        // updateFlight();
+        }
+        break;
+
+        case 4:
+        {
+        // deleteFlight();
+        }
+        break;
+
+        case 5:
+        {
+        // viewBookings();
+        }
+        break;
+
+        case 6:
+        {
+        cout << "Logging out...\n";
+        }
+        break;
+
+        default:
+        {
+        cout << "Invalid choice!\n";
+        }
+        }
+        } while (choice != 6);
+        }
+        else
+        {
+        cout << "Access Denied! Invalid credentials.\n";
+        }
+
+        }
+
 // ========== MAIN MENU ==========
 void mainMenu() {
     int choice;
@@ -550,7 +638,7 @@ void mainMenu() {
             }
             case 3:
                 {
-                cout << "Admin Login feature coming soon!\n";
+                adminLoginPanel();
                 break;
                 }
             case 4:
