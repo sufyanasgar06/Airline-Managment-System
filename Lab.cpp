@@ -529,7 +529,7 @@ void mainMenu() {
     
     do {
         cout << "\n=== AIRLINE RESERVATION SYSTEM ===\n";
-        cout << "1. Passenger Registration12221213\n";
+        cout << "1. Passenger Registration\n";
         cout << "2. Passenger Login\n";
         cout << "3. Admin Login\n";
         cout << "4. Exit System\n";
