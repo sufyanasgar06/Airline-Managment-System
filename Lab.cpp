@@ -94,6 +94,12 @@ float calculateFare(const Flight& flight, int seats, const string& classType);
 int generateBookingId();
 void addSampleData();
 
+Booking* findBookingById(int bookingId, int& index);
+Flight* findFlightByNumber(int flightNo, int& index);
+float calculateRefundAmount(const Booking& booking);
+void displayPassengerBookings();
+void cancelBooking();
+
 // Validation of date
 
 bool isValidDate(const Date& date) {
@@ -409,23 +415,25 @@ void showPassengerMenu() {
             }
             case 3:
             {
-                cout << "Cancel Booking feature coming soon!\n";
+                 cancelBooking();
                 break;
             } 
             case 4: 
-                {cout << "Generate Report feature coming soon!\n";
+                {
+                    cout << "Generate Report feature coming soon!\n";
                 break;
-            }
+                }
             case 5: 
                { cout << "Update Profile feature coming soon!\n";
                 break;
-            }
+                }
             case 6: 
-               { cout << "Logged out successfully!\n";
+               {
+                 cout << "Logged out successfully!\n";
                 loggedIn = false;
                 currentPassengerId = -1;
                 break;
-            }
+                }
             default:
                 cout << "Invalid choice! Please try again.\n";
         }
@@ -522,6 +530,246 @@ void PassengerRegistration() {
     cout << "Phone: " << newPassenger.phone << "\n";
     cout << "\nIMPORTANT: Save your Passenger ID for login: " << newPassenger.id << "\n";
 }
+// ========Cancel Booking Feature ========
+
+
+// Function to find booking by ID
+Booking* findBookingById(int bookingId, int& index) {
+    for (int i = 0; i < bookingCount; i++) {
+        if (bookings[i].bookingId == bookingId && 
+            bookings[i].passengerId == currentPassengerId) {
+            index = i;
+            return &bookings[i];
+        }
+    }
+    return nullptr;
+}
+
+// Function to find flight by flight number
+
+Flight* findFlightByNumber(int flightNo, int& index) {
+    for (int i = 0; i < flightCount; i++) {
+        if (flights[i].flightNo == flightNo) {
+            index = i;
+            return &flights[i];
+        }
+    }
+    return nullptr;
+}
+
+// Function to calculate refund amount
+float calculateRefundAmount(const Booking& booking) {
+    // Get current date
+    time_t now = time(0);
+    tm* currentTime = localtime(&now);
+    Date currentDate = {
+                     currentTime->tm_mday, 
+                     currentTime->tm_mon + 1, 
+                     currentTime->tm_year + 1900
+                    };
+    
+    // Calculate days before travel
+    int daysBefore = 0;
+    
+    // Simple calculation: assume 30 days per month
+    daysBefore = (booking.travelDate.year - currentDate.year) * 365 +
+                 (booking.travelDate.month - currentDate.month) * 30 +
+                 (booking.travelDate.day - currentDate.day);
+    
+    /*This refund Refund policy applied
+    - 7+ days before: 90% refund
+    - 3-6 days before: 50% refund  
+    - 1-2 days before: 20% refund
+    - Same day or past: No refund*/
+    
+    if (daysBefore >= 7) {
+        return booking.farePaid * 0.9;  // 90% refund
+    } else if (daysBefore >= 3) {
+        return booking.farePaid * 0.5;  // 50% refund
+    } else if (daysBefore >= 1) {
+        return booking.farePaid * 0.2;  // 20% refund
+    } else {
+        return 0.0;  // No refund
+    }
+}
+
+// Function to display passenger's bookings
+void displayPassengerBookings() {
+    cout << "\n===== YOUR BOOKINGS =====\n";
+    
+    bool found = false;
+    
+    cout << left << setw(12) << "Booking ID"
+         << setw(10) << "Flight #  "
+         << setw(15) << "Travel Date"
+         << setw(10) << "Seats"
+         << setw(12) << "Class"
+         << setw(12) << "Fare Paid($)"
+         << setw(12) << "Status" << "\n";
+    cout << string(85, '-') << "\n";   // sufyan ye 85 times ---- print kry gi
+    
+    for (int i = 0; i < bookingCount; i++) {
+        if (bookings[i].passengerId == currentPassengerId) {
+            found = true;
+            
+            // Format travel date
+            string travelDateStr = to_string(bookings[i].travelDate.day) + "/" +
+                                  to_string(bookings[i].travelDate.month) + "/" +
+                                  to_string(bookings[i].travelDate.year);
+            
+            cout << left << setw(12) << bookings[i].bookingId
+                 << setw(10) << bookings[i].flightNo
+                 << setw(15) << travelDateStr
+                 << setw(10) << bookings[i].seatsBooked
+                 << setw(12) << bookings[i].classType
+                 << setw(12) << fixed << setprecision(2) << bookings[i].farePaid
+                 << setw(12) << bookings[i].status << "\n";
+        }
+    }
+    
+    if (!found) {
+        cout << "No bookings found.\n";
+    }
+}
+
+// Main cancel booking function
+void cancelBooking() {
+    if (currentPassengerId == -1) {
+        cout << "You must login first!\n";
+        return;
+    }
+    
+    cout << "\n=== CANCEL BOOKING ===\n";
+    
+    // Show passenger's bookings
+    displayPassengerBookings();
+    
+    // Check if passenger has any bookings
+    bool hasBookings = false;
+    for (int i = 0; i < bookingCount; i++) {
+        if (bookings[i].passengerId == currentPassengerId && 
+            strcmp(bookings[i].status, "Confirmed") == 0) {
+            hasBookings = true;
+            break;
+        }
+    }
+    
+    if (!hasBookings) {
+        cout << "\nYou have no active bookings to cancel.\n";
+        return;
+    }
+    
+    // Get booking ID to cancel
+    int bookingId;
+    cout << "\nEnter Booking ID to cancel (0 to go back): ";
+    cin >> bookingId;
+    
+    if (bookingId == 0) {
+        return;
+    }
+    
+    // Find the booking
+    int bookingIndex = -1;
+    Booking* bookingToCancel = findBookingById(bookingId, bookingIndex);
+    
+    if (!bookingToCancel) {
+        cout << "Invalid Booking ID or booking not found!\n";
+        return;
+    }
+    
+    // Check if booking is already cancelled
+    if (strcmp(bookingToCancel->status, "Cancelled") == 0) {
+        cout << "This booking is already cancelled.\n";
+        return;
+    }
+    
+    // Check if booking is completed
+    if (strcmp(bookingToCancel->status, "Completed") == 0) {
+        cout << "Cannot cancel a completed booking.\n";
+        return;
+    }
+    
+    // Calculate refund
+    float refundAmount = calculateRefundAmount(*bookingToCancel);
+    
+    // Show cancellation details
+    cout << "\n=== CANCELLATION DETAILS ===\n";
+    cout << "Booking ID: " << bookingToCancel->bookingId << "\n";
+    cout << "Flight Number: " << bookingToCancel->flightNo << "\n";
+    cout << "Travel Date: " << bookingToCancel->travelDate.day << "/" 
+         << bookingToCancel->travelDate.month << "/" 
+         << bookingToCancel->travelDate.year << "\n";
+    cout << "Seats: " << bookingToCancel->seatsBooked << "\n";
+    cout << "Class: " << bookingToCancel->classType << "\n";
+    cout << "Original Fare: $" << fixed << setprecision(2) << bookingToCancel->farePaid << "\n";
+    cout << "Refund Amount: $" << fixed << setprecision(2) << refundAmount << "\n";
+    
+    if (refundAmount == 0) {
+        cout << "Note: No refund as cancellation is too close to travel date.\n";
+    }
+    
+    // Ask for confirmation
+    char confirm;
+    cout << "\nAre you sure you want to cancel this booking? (Y/N): ";
+    cin >> confirm;
+    
+    if (confirm != 'Y' && confirm != 'y') {
+        cout << "Cancellation cancelled.\n";
+        return;
+    }
+    
+    // Find the flight to update seats
+    int flightIndex = -1;
+    Flight* flight = findFlightByNumber(bookingToCancel->flightNo, flightIndex);
+    
+    if (flight) {
+        // Update flight seats
+        flight->availableSeats += bookingToCancel->seatsBooked;
+        
+        // Update flight status if it was Full
+        if (strcmp(flight->status, "Full") == 0) {
+            strcpy(flight->status, "Available");
+        }
+        
+        // Update flight revenue
+        flight->totalRevenue -= refundAmount;
+        
+        // Update flight booking count
+        flight->timesBooked--;
+    }
+    
+    // Update booking status
+    strcpy(bookingToCancel->status, "Cancelled");
+    
+    // Update passenger's total spent
+    for (int i = 0; i < passengerCount; i++) {
+        if (passengers[i].id == currentPassengerId) {
+            passengers[i].totalSpent -= refundAmount;
+            passengers[i].totalBookings--; // Decrement booking count
+            break;
+        }
+    }
+    
+    cout << "\n=== CANCELLATION SUCCESSFUL ===\n";
+    cout << "Booking ID " << bookingToCancel->bookingId << " has been cancelled.\n";
+    
+    if (refundAmount > 0) {
+        cout << "Refund of $" << fixed << setprecision(2) << refundAmount 
+             << " will be processed to your account.\n";
+    }
+    
+    // Show remaining balance if any
+    for (int i = 0; i < passengerCount; i++) {
+        if (passengers[i].id == currentPassengerId) {
+            if (passengers[i].totalSpent > 0) {
+                cout << "Your remaining total spent: $" 
+                     << fixed << setprecision(2) << passengers[i].totalSpent << "\n";
+            }
+            break;
+        }
+    }
+}
+
 
 // ========== Admin Menu ==========
 
@@ -633,16 +881,18 @@ void mainMenu() {
                 break;
             }
             case 2:
-               { passengerLogin();
+               { 
+                passengerLogin();
                 break;
-            }
+                 }
             case 3:
                 {
                 adminLoginPanel();
                 break;
                 }
             case 4:
-                {cout << "Thank you for using the system!\n";
+                {
+                    cout << "Thank you for using the system!\n";
                 break;
                 }
             default:
@@ -665,21 +915,21 @@ int main() {
     // passengers[0].totalSpent = 0.0;
     
     // Add one sample flight for testing
-    // flightCount = 1;
-    // flights[0].flightNo = 101;
-    // strcpy(flights[0].destination, "Pakistan");
-    // strcpy(flights[0].origin, "India");
-    // flights[0].departureDate = {15, 12, 2024};
-    // flights[0].departureTime = {8, 0};
-    // flights[0].arrivalDate = {15, 12, 2024};
-    // flights[0].arrivalTime = {16, 30};
-    // flights[0].totalSeats = 200;
-    // flights[0].availableSeats = 180;
-    // flights[0].baseFare = 300.0;
-    // flights[0].distance = 4000.0;
-    // strcpy(flights[0].status, "Available");
-    // flights[0].timesBooked = 20;
-    // flights[0].totalRevenue = 6000.00;
+    flightCount = 1;
+    flights[0].flightNo = 101;
+    strcpy(flights[0].destination, "Pakistan");
+    strcpy(flights[0].origin, "India");
+    flights[0].departureDate = {15, 12, 2024};
+    flights[0].departureTime = {8, 0};
+    flights[0].arrivalDate = {15, 12, 2024};
+    flights[0].arrivalTime = {16, 30};
+    flights[0].totalSeats = 200;
+    flights[0].availableSeats = 180;
+    flights[0].baseFare = 300.0;
+    flights[0].distance = 4000.0;
+    strcpy(flights[0].status, "Available");
+    flights[0].timesBooked = 20;
+    flights[0].totalRevenue = 6000.00;
     
     mainMenu();
     return 0;
