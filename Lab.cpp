@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <iomanip>
 #include <ctime>
+#include <map>
 using namespace std;
 
 const int MAX_PASSENGERS = 100;
@@ -99,6 +100,26 @@ Flight* findFlightByNumber(int flightNo, int& index);
 float calculateRefundAmount(const Booking& booking);
 void displayPassengerBookings();
 void cancelBooking();
+
+
+void generatePersonalReport();
+void displayPassengerInfo();
+void displayBookingSummary();
+void displayBookingHistory();
+void displayRecentBookings();
+string formatDate(const Date& date);
+string formatTime(const Time& time);
+int countBookingsByStatus(const char* status);
+float getTotalSpentOnBookings();
+
+// Function prototypes for Update Profile Module
+void updateProfile();
+void displayCurrentProfile();
+void updateName();
+void updateEmail();
+void updatePhone();
+void updatePassword();
+bool isValidPhone(const char* phone);
 
 // Validation of date
 
@@ -384,6 +405,245 @@ void bookFlight() {
     cout << "Receipt generated successfully!\n";
 }
 
+// ========== UPDATE PROFILE MODULE ==========
+
+// Helper function to validate phone number
+// bool isValidPhone(const char* phone) {
+//     int len = strlen(phone);
+//     if (len < 10 || len > 15) {
+//         return false;
+//     }
+    
+    // Check if all characters are digits (allow + at start)
+//     for (int i = 0; i < len; i++) {
+//         if (i == 0 && phone[i] == '+') {
+//             continue; // Allow + at beginning
+//         }
+//         if (!isdigit(phone[i])) {
+//             return false;
+//         }
+//     }
+//     return true;
+// }
+
+// Display current profile information
+void displayCurrentProfile() {
+    cout << "\n=== YOUR CURRENT PROFILE ===\n";
+    
+    // Find current passenger
+    for (int i = 0; i < passengerCount; i++) {
+        if (passengers[i].id == currentPassengerId) {
+            cout << "1. Name: " << passengers[i].name << "\n";
+            cout << "2. Email: " << passengers[i].email << "\n";
+            cout << "3. Phone: " << passengers[i].phone << "\n";
+            cout << "4. Password: ********\n";
+            cout << "------------------------------\n";
+            cout << "Total Bookings: " << passengers[i].totalBookings << "\n";
+            cout << "Total Spent: $" << fixed << setprecision(2) << passengers[i].totalSpent << "\n";
+            break;
+        }
+    }
+}
+
+// Update passenger name
+void updateName() {
+    for (int i = 0; i < passengerCount; i++) {
+        if (passengers[i].id == currentPassengerId) {
+            char newName[50];
+            cout << "\nCurrent Name: " << passengers[i].name << "\n";
+            cout << "Enter new name: ";
+            cin.ignore();
+            cin.getline(newName, 50);
+            
+            if (strlen(newName) > 0) {
+                strcpy(passengers[i].name, newName);
+                cout << "Name updated successfully!\n";
+            } else {
+                cout << "Name cannot be empty!\n";
+            }
+            return;
+        }
+    }
+}
+
+// Update passenger email
+void updateEmail() {
+    for (int i = 0; i < passengerCount; i++) {
+        if (passengers[i].id == currentPassengerId) {
+            char newEmail[50];
+            cout << "\nCurrent Email: " << passengers[i].email << "\n";
+            
+            while (true) {
+                cout << "Enter new email: ";
+                cin.ignore();
+                cin.getline(newEmail, 50);
+                
+                if (strlen(newEmail) == 0) {
+                    cout << " Email cannot be empty!\n";
+                    continue;
+                }
+                
+                if (isValidEmail(newEmail)) {
+                    // Check if email already exists (except for current user)
+                    bool emailExists = false;
+                    for (int j = 0; j < passengerCount; j++) {
+                        if (j != i && strcmp(passengers[j].email, newEmail) == 0) {
+                            emailExists = true;
+                            break;
+                        }
+                    }
+                    
+                    if (emailExists) {
+                        cout << "This email is already registered!\n";
+                    } else {
+                        strcpy(passengers[i].email, newEmail);
+                        cout << "Email updated successfully!\n";
+                        break;
+                    }
+                } else {
+                    cout << "Invalid email format! Use format: user@domain.com\n";
+                }
+            }
+            return;
+        }
+    }
+}
+
+// Update passenger phone
+void updatePhone() {
+    for (int i = 0; i < passengerCount; i++) {
+        if (passengers[i].id == currentPassengerId) {
+            char newPhone[15];
+            cout << "\nCurrent Phone: " << passengers[i].phone << "\n";
+            cout << "Enter new phone number: ";
+            cin.ignore();
+            cin.getline(newPhone, 15);
+            
+            if (strlen(newPhone) > 0) {
+                strcpy(passengers[i].phone, newPhone);
+                cout << "Phone number updated successfully!\n";
+            } else {
+                cout << "Phone number cannot be empty!\n";
+            }
+            return;
+        }
+    }
+}
+
+// Update passenger password
+void updatePassword() {
+    for (int i = 0; i < passengerCount; i++) {
+        if (passengers[i].id == currentPassengerId) {
+            char currentPass[30];
+            char newPass[30];
+            char confirmPass[30];
+            
+            cout << "\n=== CHANGE PASSWORD ===\n";
+            
+            // Verify current password
+            cout << "Enter current password: ";
+            cin.ignore();
+            cin.getline(currentPass, 30);
+            
+            if (strcmp(passengers[i].password, currentPass) != 0) {
+                cout << " Current password is incorrect!\n";
+                return;
+            }
+            
+            // Get new password
+            while (true) {
+                cout << "Enter new password (min 6 characters): ";
+                cin.getline(newPass, 30);
+                
+                if (strlen(newPass) < 6) {
+                    cout << " Password must be at least 6 characters!\n";
+                    continue;
+                }
+                
+                cout << "Confirm new password: ";
+                cin.getline(confirmPass, 30);
+                
+                if (strcmp(newPass, confirmPass) != 0) {
+                    cout << " Passwords do not match!\n";
+                } else {
+                    strcpy(passengers[i].password, newPass);
+                    cout << " Password changed successfully!\n";
+                    break;
+                }
+            }
+            return;
+        }
+    }
+}
+
+// Main function to update profile
+void updateProfile() {
+    if (currentPassengerId == -1) {
+        cout << "You must login first!\n";
+        return;
+    }
+    
+    int choice;
+    bool updating = true;
+    
+    while (updating) {
+        cout << "\n";
+        cout << "========================================\n";
+        cout << "          UPDATE PROFILE\n";
+        cout << "========================================\n";
+        
+        // Display current profile
+        displayCurrentProfile();
+        
+        // Show update options
+        cout << "\nWhat would you like to update?\n";
+        cout << "1. Update Name\n";
+        cout << "2. Update Email\n";
+        cout << "3. Update Phone Number\n";
+        cout << "4. Change Password\n";
+        cout << "5. Back to Main Menu\n";
+        cout << "----------------------------------------\n";
+        cout << "Enter your choice (1-5): ";
+        
+        cin >> choice;
+        
+        switch(choice) {
+            case 1:
+                updateName();
+                break;
+            case 2:
+                updateEmail();
+                break;
+            case 3:
+                updatePhone();
+                break;
+            case 4:
+                updatePassword();
+                break;
+            case 5:
+                cout << "Returning to main menu...\n";
+                updating = false;
+                break;
+            default:
+                cout << " Invalid choice! Please enter 1-5.\n";
+        }
+        
+        if (choice >= 1 && choice <= 4) {
+            // Ask if user wants to update more
+            char more;
+            cout << "\nDo you want to update something else? (Y/N): ";
+            cin >> more;
+            
+            if (more != 'Y' && more != 'y') {
+                updating = false;
+                cout << "Profile update completed.\n";
+            }
+        }
+    }
+}
+
+
+
 // ========== PASSENGER MENU ==========
 void showPassengerMenu() {
     int choice;
@@ -420,11 +680,12 @@ void showPassengerMenu() {
             } 
             case 4: 
                 {
-                    cout << "Generate Report feature coming soon!\n";
+                generatePersonalReport();
                 break;
                 }
             case 5: 
-               { cout << "Update Profile feature coming soon!\n";
+               {
+                updateProfile();
                 break;
                 }
             case 6: 
@@ -513,6 +774,7 @@ void PassengerRegistration() {
     cin.getline(newPassenger.phone, 15);
     
     // Initialize other fields
+
     newPassenger.totalBookings = 0;
     newPassenger.totalSpent = 0.0;
     
@@ -530,6 +792,7 @@ void PassengerRegistration() {
     cout << "Phone: " << newPassenger.phone << "\n";
     cout << "\nIMPORTANT: Save your Passenger ID for login: " << newPassenger.id << "\n";
 }
+
 // ========Cancel Booking Feature ========
 
 
@@ -770,94 +1033,284 @@ void cancelBooking() {
     }
 }
 
+string formatDate(const Date& date) {
+    return to_string(date.day) + "/" + 
+           to_string(date.month) + "/" + 
+           to_string(date.year);
+}
 
-// ========== Admin Menu ==========
+// Helper function to format time as HH:MM
+string formatTime(const Time& time) {
+    string hour = to_string(time.hour);
+    string minute = (time.minute < 10) ? "0" + to_string(time.minute) : to_string(time.minute);
+    return hour + ":" + minute;
+}
 
-        void adminMenu()
-        {
-        cout << "\n===== ADMIN PANEL =====\n";
-        cout << "1. Add Flight\n";
-        cout << "2. View Flights\n";
-        cout << "3. Update Flight\n";
-        cout << "4. Delete Flight\n";
-        cout << "5. View Bookings\n";
-        cout << "6. Logout\n";
+// Count bookings by status (Confirmed, Cancelled, etc.)
+int countBookingsByStatus(const char* status) {
+    int count = 0;
+    for (int i = 0; i < bookingCount; i++) {
+        if (bookings[i].passengerId == currentPassengerId && 
+            strcmp(bookings[i].status, status) == 0) {
+            count++;
         }
+    }
+    return count;
+}
 
- // ========== Admin Login ==========
-
-        void adminLoginPanel() {
-        cout << "\n=== ADMIN LOGIN ===\n";
-
-        string username;
-        string password;
-
-        cout << "Enter Admin Username: ";
-        cin >> username;
-
-        cout << "Enter Admin Password: ";
-        cin >> password;
-
-        if (username == "admin" && password == "1234")
-        {
-        cout << "\nLogin successful! Welcome Admin!\n";
-        int choice;
-        do {
-        adminMenu();
-
-        cout << "Enter choice: ";
-        cin >> choice;
-
-        switch (choice) {
-        case 1:
-        {
-        // addFlight();
+// Get total amount spent on all bookings
+float getTotalSpentOnBookings() {
+    float total = 0.0;
+    for (int i = 0; i < bookingCount; i++) {
+        if (bookings[i].passengerId == currentPassengerId) {
+            total += bookings[i].farePaid;
         }
-        break;
+    }
+    return total;
+}
 
-        case 2:
-        {
-        // viewFlights();
+// Display passenger basic information
+void displayPassengerInfo() {
+    cout << "\n=== PASSENGER INFORMATION ===\n";
+    
+    // Find current passenger
+    for (int i = 0; i < passengerCount; i++) {
+        if (passengers[i].id == currentPassengerId) {
+            cout << "Passenger ID: " << passengers[i].id << "\n";
+            cout << "Name: " << passengers[i].name << "\n";
+            cout << "Email: " << passengers[i].email << "\n";
+            cout << "Phone: " << passengers[i].phone << "\n";
+            cout << "Total Bookings: " << passengers[i].totalBookings << "\n";
+            cout << "Total Spent: $" << fixed << setprecision(2) << passengers[i].totalSpent << "\n";
+            break;
         }
-        break;
+    }
+    cout << "------------------------------\n";
+}
 
-        case 3:
-        {
-        // updateFlight();
-        }
-        break;
+// Display booking summary
 
-        case 4:
-        {
-        // deleteFlight();
-        }
-        break;
+void displayBookingSummary() {
+    cout << "\n=== BOOKING SUMMARY ===\n";
+    
+    int confirmed = countBookingsByStatus("Confirmed");
+    int cancelled = countBookingsByStatus("Cancelled");
+    int totalBookings = confirmed + cancelled;
+    float totalSpent = getTotalSpentOnBookings();
+    
+    cout << "Total Bookings: " << totalBookings << "\n";
+    cout << "Active Bookings: " << confirmed << "\n";
+    cout << "Cancelled Bookings: " << cancelled << "\n";
+    cout << "Total Amount Spent: $" << fixed << setprecision(2) << totalSpent << "\n";
+    cout << "------------------------------\n";
+}
 
-        case 5:
-        {
-        // viewBookings();
+// Display detailed booking history
+void displayBookingHistory() {
+    cout << "\n=== BOOKING HISTORY ===\n";
+    
+    // Check if passenger has any bookings
+    bool hasBookings = false;
+    for (int i = 0; i < bookingCount; i++) {
+        if (bookings[i].passengerId == currentPassengerId) {
+            hasBookings = true;
+            break;
         }
-        break;
+    }
+    
+    if (!hasBookings) {
+        cout << "No booking history found.\n";
+        return;
+    }
+    
+    // Display table header
+    cout << left << setw(12) << "Booking ID" 
+         << setw(10) << "Flight #" 
+         << setw(12) << "Book Date" 
+         << setw(12) << "Travel Date" 
+         << setw(8) << "Seats" 
+         << setw(10) << "Class" 
+         << setw(10) << "Fare($)" 
+         << setw(12) << "Status" << "\n";
+    cout << string(86, '-') << "\n";
+    
+    // Display each booking
+    for (int i = 0; i < bookingCount; i++) {
+        if (bookings[i].passengerId == currentPassengerId) {
+            string bookDate = formatDate(bookings[i].bookingDate);
+            string travelDate = formatDate(bookings[i].travelDate);
+            
+            cout << left << setw(12) << bookings[i].bookingId
+                 << setw(10) << bookings[i].flightNo
+                 << setw(12) << bookDate
+                 << setw(12) << travelDate
+                 << setw(8) << bookings[i].seatsBooked
+                 << setw(10) << bookings[i].classType
+                 << setw(10) << fixed << setprecision(2) << bookings[i].farePaid
+                 << setw(12) << bookings[i].status << "\n";
+        }
+    }
+    cout << "------------------------------\n";
+}
 
-        case 6:
-        {
-        cout << "Logging out...\n";
+// Display recent bookings (last 3)
+void displayRecentBookings() {
+    cout << "\n=== RECENT BOOKINGS ===\n";
+    
+    int count = 0;
+    
+    // Start from the end (most recent) and go backward
+    for (int i = bookingCount - 1; i >= 0 && count < 3; i--) {
+        if (bookings[i].passengerId == currentPassengerId) {
+            count++;
+            
+            // Find flight details
+            string origin = "Unknown";
+            string destination = "Unknown";
+            
+            for (int j = 0; j < flightCount; j++) {
+                if (flights[j].flightNo == bookings[i].flightNo) {
+                    origin = flights[j].origin;
+                    destination = flights[j].destination;
+                    break;
+                }
+            }
+            
+            string travelDate = formatDate(bookings[i].travelDate);
+            
+            cout << count << ". Booking #" << bookings[i].bookingId << "\n";
+            cout << "   Flight: " << origin << " to " << destination << "\n";
+            cout << "   Travel Date: " << travelDate << "\n";
+            cout << "   Seats: " << bookings[i].seatsBooked << " (" << bookings[i].classType << ")\n";
+            cout << "   Fare: $" << fixed << setprecision(2) << bookings[i].farePaid << "\n";
+            cout << "   Status: " << bookings[i].status << "\n";
+            cout << "   ------------------------------\n";
         }
-        break;
+    }
+    
+    if (count == 0) {
+        cout << "No recent bookings found.\n";
+    }
+}
 
-        default:
-        {
-        cout << "Invalid choice!\n";
-        }
-        }
-        } while (choice != 6);
-        }
-        else
-        {
-        cout << "Access Denied! Invalid credentials.\n";
-        }
+// Main function to generate personal report
+void generatePersonalReport() {
+    if (currentPassengerId == -1) {
+        cout << "You must login first!\n";
+        return;
+    }
+    
+    cout << "\n";
+    cout << "========================================\n";
+    cout << "      PERSONAL BOOKING REPORT\n";
+    cout << "========================================\n";
+    
+    // Display all sections
+    displayPassengerInfo();
+    displayBookingSummary();
+    displayBookingHistory();
+    displayRecentBookings();
+    
+    // Show report generation time
+    time_t now = time(0);
+    tm* currentTime = localtime(&now);
+    cout << "\nReport Generated: " 
+         << formatDate({currentTime->tm_mday, currentTime->tm_mon + 1, currentTime->tm_year + 1900})
+         << " at " << formatTime({currentTime->tm_hour, currentTime->tm_min}) << "\n";
+    
+    cout << "========================================\n";
+    cout << "          END OF REPORT\n";
+    cout << "========================================\n";
+}
 
-        }
+
+// // ========== Admin Menu ==========
+
+//         void adminMenu()
+//         {
+//         cout << "\n===== ADMIN PANEL =====\n";
+//         cout << "1. Add Flight\n";
+//         cout << "2. View Flights\n";
+//         cout << "3. Update Flight\n";
+//         cout << "4. Delete Flight\n";
+//         cout << "5. View Bookings\n";
+//         cout << "6. Logout\n";
+//         }
+
+//  // ========== Admin Login ==========
+
+//         void adminLoginPanel() {
+//         cout << "\n=== ADMIN LOGIN ===\n";
+
+//         string username;
+//         string password;
+
+//         cout << "Enter Admin Username: ";
+//         cin >> username;
+
+//         cout << "Enter Admin Password: ";
+//         cin >> password;
+
+//         if (username == "admin" && password == "1234")
+//         {
+//         cout << "\nLogin successful! Welcome Admin!\n";
+//         int choice;
+//         do {
+//         adminMenu();
+
+//         cout << "Enter choice: ";
+//         cin >> choice;
+
+//         switch (choice) {
+//         case 1:
+//         {
+//         // addFlight();
+//         }
+//         break;
+
+//         case 2:
+//         {
+//         // viewFlights();
+//         }
+//         break;
+
+//         case 3:
+//         {
+//         // updateFlight();
+//         }
+//         break;
+
+//         case 4:
+//         {
+//         // deleteFlight();
+//         }
+//         break;
+
+//         case 5:
+//         {
+//         // viewBookings();
+//         }
+//         break;
+
+//         case 6:
+//         {
+//         cout << "Logging out...\n";
+//         }
+//         break;
+
+//         default:
+//         {
+//         cout << "Invalid choice!\n";
+//         }
+//         }
+//         } while (choice != 6);
+//         }
+//         else
+//         {
+//         cout << "Access Denied! Invalid credentials.\n";
+//         }
+
+//         }
 
 // ========== MAIN MENU ==========
 void mainMenu() {
@@ -887,7 +1340,7 @@ void mainMenu() {
                  }
             case 3:
                 {
-                adminLoginPanel();
+               // adminLoginPanel();
                 break;
                 }
             case 4:
