@@ -777,6 +777,49 @@ void cancelBooking() {
     }
 }
 
+//=============== Flight Delete===================
+
+void deleteFlight(Flight flights[], int &flightCount)
+{
+    if (flightCount == 0)
+    {
+        cout << "No flights available to delete.\n";
+        return;
+    }
+
+    int flightNo;
+    cout << "Enter Flight Number to delete: ";
+    cin >> flightNo;
+
+    // Find the flight index
+    int index = -1;
+    for (int i = 0; i < flightCount; i++)
+    {
+        if (flights[i].flightNo == flightNo)
+        {
+            index = i;
+            break;
+        }
+    }
+
+    if (index == -1)
+    {
+        cout << "Flight not found.\n";
+        return;
+    }
+
+    // Shift all flights after the deleted one
+    for (int i = index; i < flightCount - 1; i++)
+    {
+        flights[i] = flights[i + 1];
+    }
+
+    flightCount--; // Reduce total flight count
+    cout << "Flight #" << flightNo << " deleted successfully!\n";
+}
+
+//=============== Flight Update===================
+
 void updateFlight(Flight flights[], int flightCount)
 {
     if (flightCount == 0)
@@ -1073,7 +1116,7 @@ void adminMenu()
 
         case 4:
         {
-        // deleteFlight();
+        deleteFlight(flights,flightCount);
         }
         break;
 
