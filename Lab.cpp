@@ -797,6 +797,35 @@ bool isValidTime(int hour, int minute)
     return (hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59);
 }
 
+//===============View Booking===================
+
+void viewBookings(Flight flights[], int flightCount)
+{
+    if (flightCount == 0)
+    {
+        cout << "No flights available.\n";
+        return;
+    }
+
+    cout << "\n========== FLIGHT BOOKINGS ==========\n";
+
+    for (int i = 0; i < flightCount; i++)
+    {
+        cout << "\n--------------------------------------\n";
+        cout << "Flight Number   : " << flights[i].flightNo << endl;
+        cout << "Origin          : " << flights[i].origin << endl;
+        cout << "Destination     : " << flights[i].destination << endl;
+
+        cout << "Economy Seats Remaining   : " << flights[i].economySeats << endl;
+        cout << "Business Seats Remaining  : " << flights[i].businessSeats << endl;
+        cout << "First Class Seats Remaining: " << flights[i].firstClassSeats << endl;
+
+        cout << "Times Booked    : " << flights[i].timesBooked << endl;
+        cout << "Total Revenue   : " << flights[i].totalRevenue << endl;
+    }
+
+    cout << "\n======================================\n";
+}
 
 //=============== Flight Delete===================
 
@@ -1205,7 +1234,7 @@ void adminMenu()
 
         case 5:
         {
-        // viewBookings();
+        viewBookings(flights,flightCount);
         }
         break;
 
