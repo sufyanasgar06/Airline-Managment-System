@@ -1073,11 +1073,13 @@ void adminLoginPanel() {
     cout << "Enter Admin Password: ";
     cin >> password;
     
-    if (username == "admin" && password == "admin123") {
+    if (username == "admin" && password == "1234") 
+    {
         cout << "\nLogin successful! Welcome Admin!\n";
         currentAdminId = 1;
         adminMenu();
-    } else {
+    } else 
+    {
         cout << "Access Denied! Invalid credentials.\n";
     }
 }
@@ -1134,33 +1136,39 @@ void addFlight(Flight flights[], int &flightCount) {
     } while (!isValidTime(hour, minute));
     flights[flightCount].arrivalTime = {hour, minute};
     
-    do {
+    do
+     {
         cout << "Enter Economy Seats: ";
         cin >> flights[flightCount].economySeats;
     } while (flights[flightCount].economySeats < 0);
     
-    do {
+    do
+    {
         cout << "Enter Business Seats: ";
         cin >> flights[flightCount].businessSeats;
     } while (flights[flightCount].businessSeats < 0);
     
-    do {
+    do 
+    {
         cout << "Enter First Class Seats: ";
         cin >> flights[flightCount].firstClassSeats;
     } while (flights[flightCount].firstClassSeats < 0);
     
-    do {
-        cout << "Enter Economy Fare: ";
+    do 
+    {
+        cout << "Enter Economy Fare(per KM): ";
         cin >> flights[flightCount].economyFare;
     } while (flights[flightCount].economyFare < 0);
     
-    do {
-        cout << "Enter Business Fare: ";
+    do 
+    {
+        cout << "Enter Business Fare(per KM): ";
         cin >> flights[flightCount].businessFare;
     } while (flights[flightCount].businessFare < 0);
     
-    do {
-        cout << "Enter First Class Fare: ";
+    do 
+    {
+        cout << "Enter First Class Fare(per KM): ";
         cin >> flights[flightCount].firstClassFare;
     } while (flights[flightCount].firstClassFare < 0);
     
@@ -1169,7 +1177,8 @@ void addFlight(Flight flights[], int &flightCount) {
                                       flights[flightCount].firstClassSeats;
     flights[flightCount].availableSeats = flights[flightCount].totalSeats;
     
-    do {
+    do 
+    {
         cout << "Enter Distance (positive): ";
         cin >> flights[flightCount].distance;
         if (flights[flightCount].distance < 0) cout << "Invalid distance!\n";
