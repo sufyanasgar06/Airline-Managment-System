@@ -776,6 +776,27 @@ void cancelBooking() {
         }
     }
 }
+bool isValidDate(int day, int month, int year)
+{
+    if (year < 2024 || year > 2100) return false;
+    if (month < 1 || month > 12) return false;
+
+    int maxDays;
+    if (month == 2)
+        maxDays = (year % 4 == 0) ? 29 : 28;
+    else if (month == 4 || month == 6 || month == 9 || month == 11)
+        maxDays = 30;
+    else
+        maxDays = 31;
+
+    return (day >= 1 && day <= maxDays);
+}
+
+bool isValidTime(int hour, int minute)
+{
+    return (hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59);
+}
+
 
 //=============== Flight Delete===================
 
@@ -833,7 +854,6 @@ void updateFlight(Flight flights[], int flightCount)
     cin >> flightNo;
     cin.ignore();
 
-    // Find flight index
     int index = -1;
     for (int i = 0; i < flightCount; i++)
     {
@@ -853,64 +873,90 @@ void updateFlight(Flight flights[], int flightCount)
     cout << "\nUpdating Flight #" << flights[index].flightNo << ":\n";
 
     cout << "Enter new Origin (current: " << flights[index].origin << "): ";
+    cin.ignore();
     cin.getline(flights[index].origin, 50);
 
     cout << "Enter new Destination (current: " << flights[index].destination << "): ";
     cin.getline(flights[index].destination, 50);
 
-    cout << "Enter new Departure Date (dd mm yyyy) (current: "
-         << flights[index].departureDate.day << "/"
-         << flights[index].departureDate.month << "/"
-         << flights[index].departureDate.year << "): ";
-    cin >> flights[index].departureDate.day
-        >> flights[index].departureDate.month
-        >> flights[index].departureDate.year;
+    int day, month, year;
+    do {
+        cout << "Enter new Departure Date (dd mm yyyy) (current: "
+             << flights[index].departureDate.day << "/"
+             << flights[index].departureDate.month << "/"
+             << flights[index].departureDate.year << "): ";
+        cin >> day >> month >> year;
+        if (!isValidDate(day, month, year)) cout << "Invalid date! Try again.\n";
+    } while (!isValidDate(day, month, year));
+    flights[index].departureDate = {day, month, year};
 
-    cout << "Enter new Departure Time (hh mm) (current: "
-         << flights[index].departureTime.hour << ":"
-         << flights[index].departureTime.minute << "): ";
-    cin >> flights[index].departureTime.hour
-        >> flights[index].departureTime.minute;
+    int hour, minute;
+    do {
+        cout << "Enter new Departure Time (hh mm, 0-23 & 0-59) (current: "
+             << flights[index].departureTime.hour << ":"
+             << flights[index].departureTime.minute << "): ";
+        cin >> hour >> minute;
+        if (!isValidTime(hour, minute)) cout << "Invalid time! Try again.\n";
+    } while (!isValidTime(hour, minute));
+    flights[index].departureTime = {hour, minute};
 
-    cout << "Enter new Arrival Date (dd mm yyyy) (current: "
-         << flights[index].arrivalDate.day << "/"
-         << flights[index].arrivalDate.month << "/"
-         << flights[index].arrivalDate.year << "): ";
-    cin >> flights[index].arrivalDate.day
-        >> flights[index].arrivalDate.month
-        >> flights[index].arrivalDate.year;
+    do {
+        cout << "Enter new Arrival Date (dd mm yyyy) (current: "
+             << flights[index].arrivalDate.day << "/"
+             << flights[index].arrivalDate.month << "/"
+             << flights[index].arrivalDate.year << "): ";
+        cin >> day >> month >> year;
+        if (!isValidDate(day, month, year)) cout << "Invalid date! Try again.\n";
+    } while (!isValidDate(day, month, year));
+    flights[index].arrivalDate = {day, month, year};
 
-    cout << "Enter new Arrival Time (hh mm) (current: "
-         << flights[index].arrivalTime.hour << ":"
-         << flights[index].arrivalTime.minute << "): ";
-    cin >> flights[index].arrivalTime.hour
-        >> flights[index].arrivalTime.minute;
+    do {
+        cout << "Enter new Arrival Time (hh mm, 0-23 & 0-59) (current: "
+             << flights[index].arrivalTime.hour << ":"
+             << flights[index].arrivalTime.minute << "): ";
+        cin >> hour >> minute;
+        if (!isValidTime(hour, minute)) cout << "Invalid time! Try again.\n";
+    } while (!isValidTime(hour, minute));
+    flights[index].arrivalTime = {hour, minute};
 
-    cout << "Enter Economy Seats (current: " << flights[index].economySeats << "): ";
-    cin >> flights[index].economySeats;
+    do {
+        cout << "Enter Economy Seats (current: " << flights[index].economySeats << "): ";
+        cin >> flights[index].economySeats;
+    } while (flights[index].economySeats < 0);
 
-    cout << "Enter Business Seats (current: " << flights[index].businessSeats << "): ";
-    cin >> flights[index].businessSeats;
+    do {
+        cout << "Enter Business Seats (current: " << flights[index].businessSeats << "): ";
+        cin >> flights[index].businessSeats;
+    } while (flights[index].businessSeats < 0);
 
-    cout << "Enter First Class Seats (current: " << flights[index].firstClassSeats << "): ";
-    cin >> flights[index].firstClassSeats;
-
+    do {
+        cout << "Enter First Class Seats (current: " << flights[index].firstClassSeats << "): ";
+        cin >> flights[index].firstClassSeats;
+    } while (flights[index].firstClassSeats < 0);
 
     flights[index].totalSeats = flights[index].economySeats + flights[index].businessSeats + flights[index].firstClassSeats;
-    flights[index].availableSeats = flights[index].totalSeats - flights[index].timesBooked; 
+    flights[index].availableSeats = flights[index].totalSeats - flights[index].timesBooked;
 
-    cout << "Enter Economy Fare (current: " << flights[index].economyFare << "): ";
-    cin >> flights[index].economyFare;
+    do {
+        cout << "Enter Economy Fare (current: " << flights[index].economyFare << "): ";
+        cin >> flights[index].economyFare;
+    } while (flights[index].economyFare < 0);
 
-    cout << "Enter Business Fare (current: " << flights[index].businessFare << "): ";
-    cin >> flights[index].businessFare;
+    do {
+        cout << "Enter Business Fare (current: " << flights[index].businessFare << "): ";
+        cin >> flights[index].businessFare;
+    } while (flights[index].businessFare < 0);
 
-    cout << "Enter First Class Fare (current: " << flights[index].firstClassFare << "): ";
-    cin >> flights[index].firstClassFare;
+    do {
+        cout << "Enter First Class Fare (current: " << flights[index].firstClassFare << "): ";
+        cin >> flights[index].firstClassFare;
+    } while (flights[index].firstClassFare < 0);
 
-    cout << "Enter Distance (current: " << flights[index].distance << "): ";
-    cin >> flights[index].distance;
-
+    do {
+        cout << "Enter Distance (current: " << flights[index].distance << "): ";
+        cin >> flights[index].distance;
+        if (flights[index].distance < 0) cout << "Distance cannot be negative!\n";
+    } while (flights[index].distance < 0);
 
     if (flights[index].availableSeats == 0)
         strcpy(flights[index].status, "Full");
@@ -989,8 +1035,13 @@ void addFlight(Flight flights[], int &flightCount)
         return;
     }
 
-    cout << "Enter Flight Number: ";
-    cin >> flights[flightCount].flightNo;
+    int flightNo;
+    do {
+        cout << "Enter Flight Number (positive integer): ";
+        cin >> flightNo;
+        if (flightNo <= 0) cout << "Invalid flight number!\n";
+    } while (flightNo <= 0);
+    flights[flightCount].flightNo = flightNo;
     cin.ignore();
 
     cout << "Enter Origin: ";
@@ -999,52 +1050,84 @@ void addFlight(Flight flights[], int &flightCount)
     cout << "Enter Destination: ";
     cin.getline(flights[flightCount].destination, 50);
 
-    cout << "Enter Departure Date (dd mm yyyy): ";
-    cin >> flights[flightCount].departureDate.day
-        >> flights[flightCount].departureDate.month
-        >> flights[flightCount].departureDate.year;
+    int day, month, year;
+    do {
+        cout << "Enter Departure Date (dd mm yyyy): ";
+        cin >> day >> month >> year;
+        if (!isValidDate(day, month, year)) cout << "Invalid date! Try again.\n";
+    } while (!isValidDate(day, month, year));
+    flights[flightCount].departureDate = {day, month, year};
 
-    cout << "Enter Departure Time (hh mm): ";
-    cin >> flights[flightCount].departureTime.hour
-        >> flights[flightCount].departureTime.minute;
+    // Departure Time
+    int hour, minute;
+    do {
+        cout << "Enter Departure Time (hh mm, 0-23 & 0-59): ";
+        cin >> hour >> minute;
+        if (!isValidTime(hour, minute)) cout << "Invalid time! Try again.\n";
+    } while (!isValidTime(hour, minute));
+    flights[flightCount].departureTime = {hour, minute};
 
-    cout << "Enter Arrival Date (dd mm yyyy): ";
-    cin >> flights[flightCount].arrivalDate.day
-        >> flights[flightCount].arrivalDate.month
-        >> flights[flightCount].arrivalDate.year;
+    // Arrival Date
+    do {
+        cout << "Enter Arrival Date (dd mm yyyy): ";
+        cin >> day >> month >> year;
+        if (!isValidDate(day, month, year)) cout << "Invalid date! Try again.\n";
+    } while (!isValidDate(day, month, year));
+    flights[flightCount].arrivalDate = {day, month, year};
 
-    cout << "Enter Arrival Time (hh mm): ";
-    cin >> flights[flightCount].arrivalTime.hour
-        >> flights[flightCount].arrivalTime.minute;
+    // Arrival Time
+    do {
+        cout << "Enter Arrival Time (hh mm, 0-23 & 0-59): ";
+        cin >> hour >> minute;
+        if (!isValidTime(hour, minute)) cout << "Invalid time! Try again.\n";
+    } while (!isValidTime(hour, minute));
+    flights[flightCount].arrivalTime = {hour, minute};
 
-    cout << "Enter Economy Seats: ";
-    cin >> flights[flightCount].economySeats;
+    // Seats
+    do {
+        cout << "Enter Economy Seats: ";
+        cin >> flights[flightCount].economySeats;
+    } while (flights[flightCount].economySeats < 0);
 
-    cout << "Enter Business Seats: ";
-    cin >> flights[flightCount].businessSeats;
+    do {
+        cout << "Enter Business Seats: ";
+        cin >> flights[flightCount].businessSeats;
+    } while (flights[flightCount].businessSeats < 0);
 
-    cout << "Enter First Class Seats: ";
-    cin >> flights[flightCount].firstClassSeats;
+    do {
+        cout << "Enter First Class Seats: ";
+        cin >> flights[flightCount].firstClassSeats;
+    } while (flights[flightCount].firstClassSeats < 0);
 
-    cout << "Enter Economy Fare: ";
-    cin >> flights[flightCount].economyFare;
+    // Fares
+    do {
+        cout << "Enter Economy Fare: ";
+        cin >> flights[flightCount].economyFare;
+    } while (flights[flightCount].economyFare < 0);
 
-    cout << "Enter Business Fare: ";
-    cin >> flights[flightCount].businessFare;
+    do {
+        cout << "Enter Business Fare: ";
+        cin >> flights[flightCount].businessFare;
+    } while (flights[flightCount].businessFare < 0);
 
-    cout << "Enter First Class Fare: ";
-    cin >> flights[flightCount].firstClassFare;
+    do {
+        cout << "Enter First Class Fare: ";
+        cin >> flights[flightCount].firstClassFare;
+    } while (flights[flightCount].firstClassFare < 0);
 
+    // Total & available seats
     flights[flightCount].totalSeats =
         flights[flightCount].economySeats +
         flights[flightCount].businessSeats +
         flights[flightCount].firstClassSeats;
+    flights[flightCount].availableSeats = flights[flightCount].totalSeats;
 
-    flights[flightCount].availableSeats =
-        flights[flightCount].totalSeats;
-
-    cout << "Enter Distance: ";
-    cin >> flights[flightCount].distance;
+    // Distance
+    do {
+        cout << "Enter Distance (positive): ";
+        cin >> flights[flightCount].distance;
+        if (flights[flightCount].distance < 0) cout << "Invalid distance!\n";
+    } while (flights[flightCount].distance < 0);
 
     strcpy(flights[flightCount].status, "Available");
     flights[flightCount].timesBooked = 0;
