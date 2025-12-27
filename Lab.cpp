@@ -4,13 +4,12 @@
 #include <cstdlib>
 #include <iomanip>
 #include <ctime>
-#include <map>
 using namespace std;
 
 const int MAX_PASSENGERS = 100;
 const int MAX_FLIGHTS = 100;
 const int MAX_BOOKINGS = 100;
-const int MAX_ADMINS = 5;
+
 
 struct Date {
     int day;
@@ -68,26 +67,17 @@ struct Booking {
     char status[20]; 
 };
 
-struct Admin {
-    int id;
-    char username[30];
-    char password[30];
-    char email[50];
-};
-
 // Global arrays
 Passenger passengers[MAX_PASSENGERS];
 Flight flights[MAX_FLIGHTS];
 Booking bookings[MAX_BOOKINGS];
-Admin admins[MAX_ADMINS];
+
 
 // Global counters
 int passengerCount = 0;
 int flightCount = 0;
 int bookingCount = 0;
-int adminCount = 0;
 int currentPassengerId = -1;
-int currentAdminId = -1;
 
 // Function prototypes
 void viewAvailableFlights();
@@ -101,7 +91,7 @@ bool isValidDate(const Date& date);
 bool isFutureDate(const Date& date);
 float calculateFare(const Flight& flight, int seats, const string& classType);
 int generateBookingId();
-void addSampleData();
+
 
 Booking* findBookingById(int bookingId, int& index);
 Flight* findFlightByNumber(int flightNo, int& index);
@@ -119,26 +109,11 @@ void updateFlight(Flight flights[], int flightCount);
 void deleteFlight(Flight flights[], int &flightCount);
 void viewAllBookings();
 
-// Helper functions
-string formatDate(const Date& date);
-string formatTime(const Time& time);
-int countBookingsByStatus(const char* status);
-float getTotalSpentOnBookings();
-void displayPassengerInfo();
-void displayBookingSummary();
-void displayBookingHistory();
-void displayRecentBookings();
 
-// Profile update functions
-void updateProfile();
-void displayCurrentProfile();
-void updateName();
-void updateEmail();
-void updatePhone();
-void updatePassword();
-bool isValidPhone(const char* phone);
-bool isValidDate(int day, int month, int year);
-bool isValidTime(int hour, int minute);
+// Add these prototypes
+void generateBookingReceipt(int bookingId);
+void viewFlightDetailsWithSeats();
+void displayFareBreakdown(const Flight& flight, int seats, const string& classType);
 
 // ========== VALIDATION FUNCTIONS ==========
 
@@ -177,17 +152,6 @@ bool isValidEmail(const char* email) {
     return (atCount == 1 && dotCount >= 1 && len >= 5);
 }
 
-bool isValidPhone(const char* phone) {
-    int len = strlen(phone);
-    if (len < 10 || len > 15) return false;
-    
-    for (int i = 0; i < len; i++) {
-        if (i == 0 && phone[i] == '+') continue;
-        if (!isdigit(phone[i])) return false;
-    }
-    return true;
-}
-
 bool isValidDate(int day, int month, int year) {
     if (year < 2024 || year > 2100) return false;
     if (month < 1 || month > 12) return false;
@@ -223,7 +187,9 @@ string formatTime(const Time& time) {
 
 // ========== CALCULATION FUNCTIONS ==========
 
-float calculateFare(const Flight& flight, int seats, const string& classType) {
+void displayFareBreakdown(const Flight& flight, int seats, const string& classType) {
+    float distanceFarePerKm = flight.baseFare / 100.0;
+    float farePerKm = flight.distance * distanceFarePerKm;
     float multiplier;
     
     if (classType == "Economy") multiplier = 1.0;
@@ -231,7 +197,34 @@ float calculateFare(const Flight& flight, int seats, const string& classType) {
     else if (classType == "First") multiplier = 3.5;
     else multiplier = 1.0;
     
-    return flight.baseFare * seats * multiplier;
+    float farePerSeat = farePerKm * multiplier;
+    float totalFare = farePerSeat * seats;
+    
+    cout << "\n=== FARE BREAKDOWN ===\n";
+    cout << "Distance: " << flight.distance << " km\n";
+    cout << "Base Rate: $" << flight.baseFare << " per 100 km\n";
+    cout << "Rate per km: $" << fixed << setprecision(2) << distanceFarePerKm << "\n";
+    cout << "Fare per km for journey: $" << farePerKm << "\n";
+    cout << "Class: " << classType << " (Multiplier: " << multiplier << "x)\n";
+    cout << "Fare per seat: $" << farePerSeat << "\n";
+    cout << "Number of seats: " << seats << "\n";
+    cout << "TOTAL FARE (for all seats): $" << totalFare << "\n";
+    cout << "=======================\n";
+}
+
+float calculateFare(const Flight& flight, int seats, const string& classType) {
+
+    // This returns TOTAL fare for all seats
+    float distanceFare = flight.distance * (flight.baseFare / 100);
+    float multiplier;
+    
+    if (classType == "Economy") multiplier = 1.0;
+    else if (classType == "Business") multiplier = 2.0;
+    else if (classType == "First") multiplier = 3.5;
+    else multiplier = 1.0;
+    
+    // Return TOTAL fare (fare per seat * number of seats)
+    return distanceFare * multiplier * seats;
 }
 
 int generateBookingId() {
@@ -253,6 +246,135 @@ float calculateRefundAmount(const Booking& booking) {
     else if (daysBefore >= 1) return booking.farePaid * 0.2;
     else return 0.0;
 }
+
+// ========== RECEIPT GENERATION FUNCTION ==========
+
+void generateBookingReceipt(int bookingId) {
+    if (currentPassengerId == -1) {
+        cout << "You must login first!\n";
+        return;
+    }
+    
+    // Find the booking
+    int bookingIndex = -1;
+    Booking* booking = nullptr;
+    
+    for (int i = 0; i < bookingCount; i++) {
+        if (bookings[i].bookingId == bookingId && 
+            bookings[i].passengerId == currentPassengerId) {
+            booking = &bookings[i];
+            bookingIndex = i;
+            break;
+        }
+    }
+    
+    if (!booking) {
+        cout << "Booking not found!\n";
+        return;
+    }
+    
+    // Find the flight
+    Flight* flight = nullptr;
+    for (int i = 0; i < flightCount; i++) {
+        if (flights[i].flightNo == booking->flightNo) {
+            flight = &flights[i];
+            break;
+        }
+    }
+    
+    if (!flight) {
+        cout << "Flight information not found!\n";
+        return;
+    }
+    
+    // Find passenger
+    Passenger* passenger = nullptr;
+    for (int i = 0; i < passengerCount; i++) {
+        if (passengers[i].id == currentPassengerId) {
+            passenger = &passengers[i];
+            break;
+        }
+    }
+    
+    if (!passenger) {
+        cout << "Passenger information not found!\n";
+        return;
+    }
+    
+    // Generate receipt
+    cout << "\n========================================\n";
+    cout << "         FLIGHT BOOKING RECEIPT\n";
+    cout << "========================================\n\n";
+    
+    cout << "RECEIPT #: " << booking->bookingId << "\n";
+    cout << "ISSUE DATE: " << formatDate(booking->bookingDate) << "\n";
+    cout << "TIME: " << formatTime({12, 0}) << " (System Time)\n\n"; // You can add actual time
+    
+    cout << "------------------------------------------------\n";
+    cout << "PASSENGER INFORMATION:\n";
+    cout << "------------------------------------------------\n";
+    cout << "Passenger ID: " << passenger->id << "\n";
+    cout << "Name: " << passenger->name << "\n";
+    cout << "Email: " << passenger->email << "\n";
+    cout << "Phone: " << passenger->phone << "\n\n";
+    
+    cout << "------------------------------------------------\n";
+    cout << "FLIGHT INFORMATION:\n";
+    cout << "------------------------------------------------\n";
+    cout << "Flight Number: " << flight->flightNo << "\n";
+    cout << "Route: " << flight->origin << " to " << flight->destination << "\n";
+    cout << "Departure: " << formatDate(flight->departureDate) << " at " 
+         << formatTime(flight->departureTime) << "\n";
+    cout << "Arrival: " << formatDate(flight->arrivalDate) << " at " 
+         << formatTime(flight->arrivalTime) << "\n";
+    cout << "Distance: " << flight->distance << " km\n\n";
+    
+    cout << "------------------------------------------------\n";
+    cout << "BOOKING DETAILS:\n";
+    cout << "------------------------------------------------\n";
+    cout << "Travel Date: " << formatDate(booking->travelDate) << "\n";
+    cout << "Class: " << booking->classType << "\n";
+    cout << "Seats Booked: " << booking->seatsBooked << "\n";
+    cout << "Base Fare per seat: $" << flight->baseFare << "\n";
+    cout << "Distance Rate: $" << (flight->baseFare / 100) << " per km\n";
+    
+    cout << "------------------------------------------------\n";
+    cout << "FARE BREAKDOWN:\n";
+    cout << "------------------------------------------------\n";
+    
+    float distanceFare = flight->distance * (flight->baseFare / 100);
+    float classMultiplier;
+    
+    if (strcmp(booking->classType, "Economy") == 0) classMultiplier = 1.0;
+    else if (strcmp(booking->classType, "Business") == 0) classMultiplier = 2.0;
+    else if (strcmp(booking->classType, "First") == 0) classMultiplier = 3.5;
+    else classMultiplier = 1.0;
+    
+    float farePerSeat = distanceFare * classMultiplier;
+    float totalFare = farePerSeat * booking->seatsBooked;
+    
+    cout << "Distance (" << flight->distance << " km): $" << distanceFare << "\n";
+    cout << "Class Multiplier (" << booking->classType << "): " << classMultiplier << "x\n";
+    cout << "Fare per seat: $" << fixed << setprecision(2) << farePerSeat << "\n";
+    cout << "Number of seats: " << booking->seatsBooked << "\n";
+    cout << "------------------------------------------------\n";
+    cout << "TOTAL FARE: $" << fixed << setprecision(2) << totalFare << "\n\n";
+    
+    cout << "------------------------------------------------\n";
+    cout << "BOOKING STATUS: " << booking->status << "\n";
+    cout << "------------------------------------------------\n\n";
+    
+    cout << "Terms & Conditions:\n";
+    cout << "1. This receipt is proof of booking.\n";
+    cout << "2. Cancellation charges apply as per policy.\n";
+    cout << "3. Please arrive 2 hours before departure.\n";
+    cout << "4. Carry valid ID proof for verification.\n\n";
+    
+    cout << "========================================\n";
+    cout << "     Thank you for choosing our airline!\n";
+    cout << "========================================\n";
+}
+
 
 // ========== SEARCH FUNCTIONS ==========
 
@@ -279,6 +401,7 @@ Flight* findFlightByNumber(int flightNo, int& index) {
 
 // ========== VIEW FUNCTIONS ==========
 
+
 void viewAvailableFlights() {
     cout << "\n=== AVAILABLE FLIGHTS ===\n";
     
@@ -287,24 +410,57 @@ void viewAvailableFlights() {
         return;
     }
     
-    cout << left << setw(10) << "Flight #" 
-         << setw(15) << "From" 
-         << setw(15) << "To" 
-         << setw(10) << "Seats" 
-         << setw(10) << "Fare" 
+    cout << left 
+         << setw(8) << "Flight #" 
+         << setw(12) << "From" 
+         << setw(12) << "To"
+         << setw(10) << "Date"
+         << setw(8) << "Time"
+         << setw(8) << "Eco" 
+         << setw(8) << "Bus" 
+         << setw(8) << "First"
+         << setw(10) << "Fare/km"
          << setw(12) << "Status" << "\n";
+    cout << string(100, '-') << "\n";
     
+    bool hasAvailable = false;
     for (int i = 0; i < flightCount; i++) {
-        if (strcmp(flights[i].status, "Available") == 0 && flights[i].availableSeats > 0) {
-            cout << left << setw(10) << flights[i].flightNo
-                 << setw(15) << flights[i].origin
-                 << setw(15) << flights[i].destination
-                 << setw(10) << flights[i].availableSeats
-                 << setw(10) << "$" << flights[i].baseFare
+        if (strcmp(flights[i].status, "Available") == 0) {
+            hasAvailable = true;
+            
+            // Get seat counts for each class
+            int ecoSeats = flights[i].economySeats;
+            int busSeats = flights[i].businessSeats;
+            int firstSeats = flights[i].firstClassSeats;
+            
+            // Format date and time
+            string dateStr = to_string(flights[i].departureDate.day) + "/" +
+                           to_string(flights[i].departureDate.month);
+            string timeStr = to_string(flights[i].departureTime.hour) + ":" +
+                           (flights[i].departureTime.minute < 10 ? "0" : "") +
+                           to_string(flights[i].departureTime.minute);
+            
+            cout << left 
+                 << setw(8) << flights[i].flightNo
+                 << setw(12) << flights[i].origin
+                 << setw(12) << flights[i].destination
+                 << setw(10) << dateStr
+                 << setw(8) << timeStr
+                 << setw(8) << ecoSeats
+                 << setw(8) << busSeats
+                 << setw(8) << firstSeats
+                 << setw(10) << "$" + to_string(flights[i].baseFare)
                  << setw(12) << flights[i].status << "\n";
         }
     }
+    
+    if (!hasAvailable) {
+        cout << "No available flights at the moment.\n";
+    }
+    
+    cout << "\nLegend: Eco=Economy, Bus=Business, Fare/km=Base fare per 100 km\n";
 }
+
 
 void viewFlights(Flight flights[], int flightCount) {
     if (flightCount == 0) {
@@ -404,8 +560,7 @@ void bookFlight() {
     
     for (int i = 0; i < flightCount; i++) {
         if (flights[i].flightNo == flightChoice && 
-            strcmp(flights[i].status, "Available") == 0 && 
-            flights[i].availableSeats > 0) {
+            strcmp(flights[i].status, "Available") == 0) {
             selectedFlight = &flights[i];
             flightIndex = i;
             break;
@@ -414,6 +569,12 @@ void bookFlight() {
     
     if (!selectedFlight) {
         cout << "Invalid flight selection or flight not available!\n";
+        return;
+    }
+    
+    // Check available seats
+    if (selectedFlight->availableSeats <= 0) {
+        cout << "Sorry, this flight is fully booked!\n";
         return;
     }
     
@@ -436,14 +597,32 @@ void bookFlight() {
     cin >> classChoice;
     
     string classType;
+    int classSeatsAvailable = 0;
+    
     switch(classChoice) {
-        case 1: classType = "Economy"; break;
-        case 2: classType = "Business"; break;
-        case 3: classType = "First"; break;
+        case 1: 
+            classType = "Economy";
+            classSeatsAvailable = selectedFlight->economySeats;
+            break;
+        case 2: 
+            classType = "Business";
+            classSeatsAvailable = selectedFlight->businessSeats;
+            break;
+        case 3: 
+            classType = "First";
+            classSeatsAvailable = selectedFlight->firstClassSeats;
+            break;
         default: 
             cout << "Invalid choice! Defaulting to Economy.\n";
             classType = "Economy";
+            classSeatsAvailable = selectedFlight->economySeats;
             break;
+    }
+    
+    // Check if enough seats in selected class
+    if (seats > classSeatsAvailable) {
+        cout << "Sorry! Only " << classSeatsAvailable << " seats available in " << classType << " class.\n";
+        return;
     }
     
     Date travelDate;
@@ -466,6 +645,10 @@ void bookFlight() {
     cout << "Flight: " << selectedFlight->origin << " to " << selectedFlight->destination << "\n";
     cout << "Date: " << travelDate.day << "/" << travelDate.month << "/" << travelDate.year << "\n";
     cout << "Seats: " << seats << " (" << classType << " class)\n";
+    
+    // Show fare breakdown
+    displayFareBreakdown(*selectedFlight, seats, classType);
+    
     cout << "Total Fare: $" << fixed << setprecision(2) << fare << "\n";
     
     char confirm;
@@ -476,12 +659,13 @@ void bookFlight() {
         cout << "Booking cancelled.\n";
         return;
     }
-    
+   
     Booking newBooking;
     newBooking.bookingId = generateBookingId();
     newBooking.passengerId = currentPassengerId;
     newBooking.flightNo = flightChoice;
     
+    // Set booking date to current date
     time_t now = time(0);
     tm* currentTime = localtime(&now);
     newBooking.bookingDate.day = currentTime->tm_mday;
@@ -494,16 +678,40 @@ void bookFlight() {
     newBooking.farePaid = fare;
     strcpy(newBooking.status, "Confirmed");
     
-    bookings[bookingCount++] = newBooking;
-    
-    flights[flightIndex].availableSeats -= seats;
-    flights[flightIndex].timesBooked++;
-    flights[flightIndex].totalRevenue += fare;
-    
-    if (flights[flightIndex].availableSeats == 0) {
-        strcpy(flights[flightIndex].status, "Full");
+
+    if (bookingCount < MAX_BOOKINGS) {
+        bookings[bookingCount] = newBooking;
+        bookingCount++;
+    } else {
+        cout << "Error: Maximum bookings limit reached!\n";
+        return;
     }
     
+ 
+    if (flightIndex >= 0 && flightIndex < flightCount) {
+        // Reduce seats 
+        if (classType == "Economy") {
+            flights[flightIndex].economySeats -= seats;
+        } else if (classType == "Business") {
+            flights[flightIndex].businessSeats -= seats;
+        } else if (classType == "First") {
+            flights[flightIndex].firstClassSeats -= seats;
+        }
+        
+        // Update total available seats
+        flights[flightIndex].availableSeats -= seats;
+        
+        // Update revenue and booking count
+        flights[flightIndex].timesBooked++;
+        flights[flightIndex].totalRevenue += fare;
+        
+        // Update flight status if fully booked
+        if (flights[flightIndex].availableSeats == 0) {
+            strcpy(flights[flightIndex].status, "Full");
+        }
+    }
+    
+    // UPDATE PASSENGER INFORMATION
     for (int i = 0; i < passengerCount; i++) {
         if (passengers[i].id == currentPassengerId) {
             passengers[i].totalBookings++;
@@ -512,8 +720,94 @@ void bookFlight() {
         }
     }
     
-    cout << "\nBooking confirmed! Booking ID: " << newBooking.bookingId << "\n";
-    cout << "Receipt generated successfully!\n";
+    // Show confirmation and generate receipt
+    cout << "\n Booking confirmed! Booking ID: " << newBooking.bookingId << "\n";
+    cout << " Generating receipt...\n\n";
+    
+
+    generateBookingReceipt(newBooking.bookingId);
+    
+    cout << "\n IMPORTANT: Save your Booking ID: " << newBooking.bookingId << "\n";
+    cout << "You can view this receipt anytime from 'View Booking Receipt' in menu.\n";
+}
+
+void viewFlightDetailsWithSeats() {
+    cout << "\n=== FLIGHT DETAILS WITH SEAT AVAILABILITY ===\n";
+    
+    if (flightCount == 0) {
+        cout << "No flights available.\n";
+        return;
+    }
+    
+    int flightNo;
+    cout << "Enter Flight Number to view details (0 to cancel): ";
+    cin >> flightNo;
+    
+    if (flightNo == 0) return;
+    
+    Flight* flight = nullptr;
+    int flightIndex = -1;
+    
+    for (int i = 0; i < flightCount; i++) {
+        if (flights[i].flightNo == flightNo) {
+            flight = &flights[i];
+            flightIndex = i;
+            break;
+        }
+    }
+    
+    if (!flight) {
+        cout << "Flight not found!\n";
+        return;
+    }
+    
+    cout << "\n========================================\n";
+    cout << "     FLIGHT DETAILS: " << flight->flightNo << "\n";
+    cout << "========================================\n";
+    
+    cout << "\nRoute: " << flight->origin << " to " << flight->destination << "\n";
+    cout << "Distance: " << flight->distance << " km\n";
+    cout << "Base Fare: $" << flight->baseFare << " per 100 km\n";
+    
+    cout << "\n--- Departure ---\n";
+    cout << "Date: " << formatDate(flight->departureDate) << "\n";
+    cout << "Time: " << formatTime(flight->departureTime) << "\n";
+    
+    cout << "\n--- Arrival ---\n";
+    cout << "Date: " << formatDate(flight->arrivalDate) << "\n";
+    cout << "Time: " << formatTime(flight->arrivalTime) << "\n";
+    
+    cout << "\n--- SEAT AVAILABILITY ---\n";
+    cout << left << setw(15) << "CLASS" 
+         << setw(10) << "SEATS" 
+         << setw(15) << "AVAILABLE" 
+         << setw(15) << "FARE PER SEAT" << "\n";
+    cout << string(55, '-') << "\n";
+    
+    // Calculate fares per seat based on distance
+    float distanceFare = flight->distance * (flight->baseFare / 100);
+    
+    cout << left 
+         << setw(15) << "Economy"
+         << setw(10) << flight->economySeats
+         << setw(15) << flight->economySeats
+         << setw(15) << "$" + to_string(distanceFare * 1.0) << "\n";
+    
+    cout << left 
+         << setw(15) << "Business"
+         << setw(10) << flight->businessSeats
+         << setw(15) << flight->businessSeats
+         << setw(15) << "$" + to_string(distanceFare * 2.0) << "\n";
+    
+    cout << left 
+         << setw(15) << "First Class"
+         << setw(10) << flight->firstClassSeats
+         << setw(15) << flight->firstClassSeats
+         << setw(15) << "$" + to_string(distanceFare * 3.5) << "\n";
+    
+    cout << "\nTotal Seats: " << flight->totalSeats << "\n";
+    cout << "Status: " << flight->status << "\n";
+    cout << "========================================\n";
 }
 
 void displayPassengerBookings() {
@@ -1056,7 +1350,6 @@ void adminMenu() {
             case 7:
                 cout << "Logging out...\n";
                 loggedIn = false;
-                currentAdminId = -1;
                 break;
             default:
                 cout << "Invalid choice!\n";
@@ -1075,7 +1368,7 @@ void adminLoginPanel() {
     
     if (username == "admin" && password == "admin123") {
         cout << "\nLogin successful! Welcome Admin!\n";
-        currentAdminId = 1;
+     
         adminMenu();
     } else {
         cout << "Access Denied! Invalid credentials.\n";
@@ -1280,7 +1573,8 @@ void deleteFlight(Flight flights[], int &flightCount) {
     cout << "Flight #" << flightNo << " deleted successfully!\n";
 }
 
-// ========== PASSENGER FUNCTIONS ==========
+
+//============================================================
 
 void showPassengerMenu() {
     int choice;
@@ -1288,23 +1582,48 @@ void showPassengerMenu() {
     
     while (loggedIn) {
         cout << "\n=== PASSENGER MENU ===\n";
-        cout << "1. View Available Flights\n";
-        cout << "2. Book a Flight\n";
-        cout << "3. Cancel Booking\n";
-        cout << "4. Generate Personal Report\n";
-        cout << "5. Update Profile\n";
-        cout << "6. Logout\n";
-        cout << "\nEnter your choice (1-6): ";
+        cout << "1. View Available Flights (Summary)\n";
+        cout << "2. View Flight Details with Seats\n";
+        cout << "3. Book a Flight\n";
+        cout << "4. View My Bookings\n";
+        cout << "5. Cancel Booking\n";
+        cout << "6. View Booking Receipt\n";
+        cout << "7. Generate Personal Report\n";
+        cout << "8. Update Profile\n";
+        cout << "9. Logout\n";
+        cout << "\nEnter your choice (1-9): ";
         
         cin >> choice;
         
         switch(choice) {
-            case 1: viewAvailableFlights(); break;
-            case 2: bookFlight(); break;
-            case 3: cancelBooking(); break;
-            case 4: generatePersonalReport(); break;
-            case 5: updateProfile(); break;
+            case 1:
+             viewAvailableFlights();
+            break;
+            case 2: 
+            viewFlightDetailsWithSeats();
+             break;
+            case 3: 
+            bookFlight();
+             break;
+            case 4:
+             displayPassengerBookings();
+              break;
+            case 5:
+             cancelBooking(); 
+             break;
             case 6: 
+                if (currentPassengerId == -1) {
+                    cout << "You must login first!\n";
+                } else {
+                    int receiptId;
+                    cout << "Enter Booking ID for receipt: ";
+                    cin >> receiptId;
+                    generateBookingReceipt(receiptId);
+                }
+                break;
+            case 7: generatePersonalReport(); break;
+            case 8: updateProfile(); break;
+            case 9: 
                 cout << "Logged out successfully!\n";
                 loggedIn = false;
                 currentPassengerId = -1;
