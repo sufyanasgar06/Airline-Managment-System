@@ -10,13 +10,11 @@ const int MAX_PASSENGERS = 100;
 const int MAX_FLIGHTS = 100;
 const int MAX_BOOKINGS = 100;
 
-
 struct Date {
     int day;
     int month;
     int year;
 };
-
 struct Time {
     int hour;
     int minute;
