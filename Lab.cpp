@@ -1417,62 +1417,8 @@ void mainMenu() {
 
 // ========== MAIN FUNCTION ==========
 
-int main() {
-    // Add sample data
-    passengerCount = 1;
-    passengers[0].id = 1001;
-    strcpy(passengers[0].name, "John Doe");
-    strcpy(passengers[0].password, "password123");
-    strcpy(passengers[0].email, "john@example.com");
-    strcpy(passengers[0].phone, "1234567890");
-    passengers[0].totalBookings = 0;
-    passengers[0].totalSpent = 0.0;
-    
-    flightCount = 2;
-    // Flight 1
-    flights[0].flightNo = 101;
-    strcpy(flights[0].destination, "New York");
-    strcpy(flights[0].origin, "London");
-    flights[0].departureDate = {15, 12, 2024};
-    flights[0].departureTime = {8, 0};
-    flights[0].arrivalDate = {15, 12, 2024};
-    flights[0].arrivalTime = {16, 30};
-    flights[0].economySeats = 100;
-    flights[0].businessSeats = 50;
-    flights[0].firstClassSeats = 20;
-    flights[0].economyFare = 300.0;
-    flights[0].businessFare = 600.0;
-    flights[0].firstClassFare = 1050.0;
-    flights[0].totalSeats = 170;
-    flights[0].availableSeats = 170;
-    flights[0].baseFare = 300.0;
-    flights[0].distance = 5567.0;
-    strcpy(flights[0].status, "Available");
-    flights[0].timesBooked = 0;
-    flights[0].totalRevenue = 0.0;
-    
-    // Flight 2
-    flights[1].flightNo = 102;
-    strcpy(flights[1].destination, "Paris");
-    strcpy(flights[1].origin, "Tokyo");
-    flights[1].departureDate = {20, 12, 2024};
-    flights[1].departureTime = {14, 30};
-    flights[1].arrivalDate = {20, 12, 2024};
-    flights[1].arrivalTime = {23, 45};
-    flights[1].economySeats = 120;
-    flights[1].businessSeats = 40;
-    flights[1].firstClassSeats = 15;
-    flights[1].economyFare = 400.0;
-    flights[1].businessFare = 800.0;
-    flights[1].firstClassFare = 1400.0;
-    flights[1].totalSeats = 175;
-    flights[1].availableSeats = 175;
-    flights[1].baseFare = 400.0;
-    flights[1].distance = 9714.0;
-    strcpy(flights[1].status, "Available");
-    flights[1].timesBooked = 0;
-    flights[1].totalRevenue = 0.0;
-    
+int main() 
+{
     mainMenu();
     return 0;
 }
