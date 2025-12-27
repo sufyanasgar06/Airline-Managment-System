@@ -445,7 +445,7 @@ void passengerLogin() {
     
     cout << "Enter Password: ";
     cin.getline(password, 30);
-cout<<endl;
+    cout<<endl;
     bool login = false;
 
     for (int i = 0; i < passengerCount; i++) {
@@ -464,7 +464,7 @@ cout<<endl;
 }
 
 // ========== PASSENGER REGISTRATION ==========
-void PassengerRegistration() {
+    void PassengerRegistration() {
     if (passengerCount >= MAX_PASSENGERS) {
         cout << "Maximum passenger limit reached! Cannot register more passengers.\n";
         return;
@@ -523,10 +523,61 @@ void PassengerRegistration() {
     cout << "\nIMPORTANT: Save your Passenger ID for login: " << newPassenger.id << "\n";
 }
 
-// ========== Admin Menu ==========
+// ========== PASSENGER REGISTRATION ==========
 
-        void adminMenu()
-        {
+void addFlight()
+{
+     if (flightCount >= 100) {
+        cout << "Cannot add more flights. Maximum capacity reached." << endl;
+        return;
+    }
+
+    Flight &f = flights[flightCount]; // reference to next flight
+
+    cout << "Enter Flight Number: ";
+    cin >> f.flightNo;
+    cin.ignore();
+
+    cout << "Enter Origin: ";
+    cin.getline(f.origin, 50);
+
+    cout << "Enter Destination: ";
+    cin.getline(f.destination, 50);
+
+    cout << "Enter Departure Date (dd mm yyyy): ";
+    cin >> f.departureDate.day >> f.departureDate.month >> f.departureDate.year;
+
+    cout << "Enter Departure Time (hh mm): ";
+    cin >> f.departureTime.hour >> f.departureTime.minute;
+
+    cout << "Enter Arrival Date (dd mm yyyy): ";
+    cin >> f.arrivalDate.day >> f.arrivalDate.month >> f.arrivalDate.year;
+
+    cout << "Enter Arrival Time (hh mm): ";
+    cin >> f.arrivalTime.hour >> f.arrivalTime.minute;
+
+    cout << "Enter Total Seats: ";
+    cin >> f.totalSeats;
+    f.availableSeats = f.totalSeats; // initially all seats are available
+
+    cout << "Enter Base Fare: ";
+    cin >> f.baseFare;
+
+    cout << "Enter Distance: ";
+    cin >> f.distance;
+
+    strcpy(f.status, "Available");
+    f.timesBooked = 0;
+    f.totalRevenue = 0.0;
+
+    flightCount++; // increment flight count
+
+    cout << "Flight added successfully!" << endl;
+}
+
+// ========== Admin Menu ==========
+void adminMenu()
+{
         cout << "\n===== ADMIN PANEL =====\n";
         cout << "1. Add Flight\n";
         cout << "2. View Flights\n";
@@ -534,7 +585,7 @@ void PassengerRegistration() {
         cout << "4. Delete Flight\n";
         cout << "5. View Bookings\n";
         cout << "6. Logout\n";
-        }
+ }
 
  // ========== Admin Login ==========
 
@@ -554,6 +605,8 @@ void PassengerRegistration() {
         {
         cout << "\nLogin successful! Welcome Admin!\n";
         int choice;
+        Flight flights[100];  // array to store flights
+        int flightCount = 0;
         do {
         adminMenu();
 
@@ -563,7 +616,7 @@ void PassengerRegistration() {
         switch (choice) {
         case 1:
         {
-        // addFlight();
+        addFlight();
         }
         break;
 
