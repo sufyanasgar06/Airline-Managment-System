@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <iomanip>
 #include <ctime>
+#include <fstream>
 using namespace std;
 
 const int MAX_PASSENGERS = 100;
@@ -88,6 +89,12 @@ void mainMenu();
 bool isValidDate(const Date& date);
 bool isFutureDate(const Date& date);
 float calculateFare(const Flight& flight, int seats, const string& classType);
+void loadPassengers();
+void savePassengers();
+void loadFlights();
+void saveFlights();
+void loadBookings();
+void saveBookings();
 int generateBookingId();
 
 
@@ -182,6 +189,182 @@ string formatTime(const Time& time) {
     string minute = (time.minute < 10) ? "0" + to_string(time.minute) : to_string(time.minute);
     return hour + ":" + minute;
 }
+
+// ========== File Handling ==========
+
+void savePassengers() {
+    ofstream out("passengers.txt");
+    out << passengerCount << endl;
+
+    for (int i = 0; i < passengerCount; i++) {
+        out << passengers[i].id << endl
+            << passengers[i].name << endl
+            << passengers[i].password << endl
+            << passengers[i].email << endl
+            << passengers[i].phone << endl
+            << passengers[i].totalBookings << endl
+            << passengers[i].totalSpent << endl;
+    }
+    out.close();
+}
+
+void loadPassengers() {
+    ifstream in("passengers.txt");
+    if (!in) return;
+
+    in >> passengerCount;
+    in.ignore();
+
+    for (int i = 0; i < passengerCount; i++) {
+        in >> passengers[i].id;
+        in.ignore();
+        in.getline(passengers[i].name, 50);
+        in.getline(passengers[i].password, 30);
+        in.getline(passengers[i].email, 50);
+        in.getline(passengers[i].phone, 15);
+        in >> passengers[i].totalBookings;
+        in >> passengers[i].totalSpent;
+        in.ignore();
+    }
+    in.close();
+}
+
+void saveFlights() {
+    ofstream out("flights.txt");
+    out << flightCount << endl;
+
+    for (int i = 0; i < flightCount; i++) {
+        out << flights[i].flightNo << endl
+            << flights[i].origin << endl
+            << flights[i].destination << endl
+            << flights[i].departureDate.day << " "
+            << flights[i].departureDate.month << " "
+            << flights[i].departureDate.year << endl
+            << flights[i].departureTime.hour << " "
+            << flights[i].departureTime.minute << endl
+            << flights[i].arrivalDate.day << " "
+            << flights[i].arrivalDate.month << " "
+            << flights[i].arrivalDate.year << endl
+            << flights[i].arrivalTime.hour << " "
+            << flights[i].arrivalTime.minute << endl
+            << flights[i].economySeats << " "
+            << flights[i].businessSeats << " "
+            << flights[i].firstClassSeats << endl
+            << flights[i].economyFare << " "
+            << flights[i].businessFare << " "
+            << flights[i].firstClassFare << endl
+            << flights[i].totalSeats << " "
+            << flights[i].availableSeats << endl
+            << flights[i].distance << endl
+            << flights[i].baseFare << endl
+            << flights[i].status << endl
+            << flights[i].timesBooked << endl
+            << flights[i].totalRevenue << endl;
+    }
+    out.close();
+}
+
+void loadFlights() {
+    ifstream in("flights.txt");
+    if (!in) return;
+
+    in >> flightCount;
+    in.ignore();
+
+    for (int i = 0; i < flightCount; i++) {
+        in >> flights[i].flightNo;
+        in.ignore();
+        in.getline(flights[i].origin, 50);
+        in.getline(flights[i].destination, 50);
+
+        in >> flights[i].departureDate.day
+           >> flights[i].departureDate.month
+           >> flights[i].departureDate.year;
+
+        in >> flights[i].departureTime.hour
+           >> flights[i].departureTime.minute;
+
+        in >> flights[i].arrivalDate.day
+           >> flights[i].arrivalDate.month
+           >> flights[i].arrivalDate.year;
+
+        in >> flights[i].arrivalTime.hour
+           >> flights[i].arrivalTime.minute;
+
+        in >> flights[i].economySeats
+           >> flights[i].businessSeats
+           >> flights[i].firstClassSeats;
+
+        in >> flights[i].economyFare
+           >> flights[i].businessFare
+           >> flights[i].firstClassFare;
+
+        in >> flights[i].totalSeats
+           >> flights[i].availableSeats;
+
+        in >> flights[i].distance;
+        in >> flights[i].baseFare;
+        in.ignore();
+        in.getline(flights[i].status, 20);
+        in >> flights[i].timesBooked;
+        in >> flights[i].totalRevenue;
+        in.ignore();
+    }
+    in.close();
+}
+
+void saveBookings() {
+    ofstream out("bookings.txt");
+    out << bookingCount << endl;
+
+    for (int i = 0; i < bookingCount; i++) {
+        out << bookings[i].bookingId << endl
+            << bookings[i].passengerId << endl
+            << bookings[i].flightNo << endl
+            << bookings[i].bookingDate.day << " "
+            << bookings[i].bookingDate.month << " "
+            << bookings[i].bookingDate.year << endl
+            << bookings[i].travelDate.day << " "
+            << bookings[i].travelDate.month << " "
+            << bookings[i].travelDate.year << endl
+            << bookings[i].seatsBooked << endl
+            << bookings[i].classType << endl
+            << bookings[i].farePaid << endl
+            << bookings[i].status << endl;
+    }
+    out.close();
+}
+
+void loadBookings() {
+    ifstream in("bookings.txt");
+    if (!in) return;
+
+    in >> bookingCount;
+    in.ignore();
+
+    for (int i = 0; i < bookingCount; i++) {
+        in >> bookings[i].bookingId;
+        in >> bookings[i].passengerId;
+        in >> bookings[i].flightNo;
+
+        in >> bookings[i].bookingDate.day
+           >> bookings[i].bookingDate.month
+           >> bookings[i].bookingDate.year;
+
+        in >> bookings[i].travelDate.day
+           >> bookings[i].travelDate.month
+           >> bookings[i].travelDate.year;
+
+        in >> bookings[i].seatsBooked;
+        in.ignore();
+        in.getline(bookings[i].classType, 20);
+        in >> bookings[i].farePaid;
+        in.ignore();
+        in.getline(bookings[i].status, 20);
+    }
+    in.close();
+}
+
 
 // ========== CALCULATION FUNCTIONS ==========
 
@@ -945,6 +1128,7 @@ void cancelBooking() {
         cout << "Refund of $" << fixed << setprecision(2) << refundAmount 
              << " will be processed to your account.\n";
     }
+    saveBookings();
 }
 
 // ========== REPORT FUNCTIONS ==========
@@ -1482,6 +1666,7 @@ void addFlight(Flight flights[], int &flightCount) {
     
     flightCount++;
     cout << "\nFlight added successfully!\n";
+    saveFlights();
 }
 
 void updateFlight(Flight flights[], int flightCount) {
@@ -1547,6 +1732,7 @@ void updateFlight(Flight flights[], int flightCount) {
     flights[index].arrivalTime = {hour, minute};
     
     cout << "Flight updated successfully!\n";
+    saveFlights();
 }
 
 void deleteFlight(Flight flights[], int &flightCount) {
@@ -1578,6 +1764,7 @@ void deleteFlight(Flight flights[], int &flightCount) {
     
     flightCount--;
     cout << "Flight #" << flightNo << " deleted successfully!\n";
+    saveFlights();
 }
 
 
@@ -1714,6 +1901,7 @@ void PassengerRegistration() {
     cout << "Email: " << newPassenger.email << "\n";
     cout << "Phone: " << newPassenger.phone << "\n";
     cout << "\nIMPORTANT: Save your Passenger ID for login: " << newPassenger.id << "\n";
+    savePassengers();
 }
 
 // ========== MAIN MENU ==========
@@ -1745,7 +1933,9 @@ void mainMenu() {
 
 int main() 
 {
-    
+    loadPassengers();
+    loadFlights();
+    loadBookings();
     mainMenu();
     return 0;
 }
