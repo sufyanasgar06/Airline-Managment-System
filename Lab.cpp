@@ -479,11 +479,7 @@ void bookFlight() {
         
         // Update total available seats
         flights[flightIndex].availableSeats -= seats;
-        
-        // Update revenue and booking count
-        flights[flightIndex].timesBooked++;
-        flights[flightIndex].totalRevenue += fare;
-        
+                
         // Update flight status if fully booked
         if (flights[flightIndex].availableSeats == 0) {
             strcpy(flights[flightIndex].status, "Full");
@@ -508,7 +504,10 @@ void bookFlight() {
     
     cout << "\n IMPORTANT: Save your Booking ID: " << newBooking.bookingId << "\n";
     cout << "You can view this receipt anytime from 'View Booking Receipt' in menu.\n";
+    flights[flightIndex].timesBooked++;
+    flights[flightIndex].totalRevenue += fare;
     saveBookings();
+    saveFlights();
 }
 
 //=========================Passenger Regestration And Login===================================
@@ -697,6 +696,9 @@ void cancelBooking() {
              << " will be processed to your account.\n";
     }
     saveBookings();
+    flight->totalRevenue -= bookingToCancel->farePaid;
+    flight->timesBooked--;
+    
 }
 
 
@@ -1453,8 +1455,9 @@ void adminMenu() {
         cout << "3. Update Flight\n";
         cout << "4. Delete Flight\n";
         cout << "5. View All Bookings\n";
-        cout << "6. View Passenger Details\n";
-        cout << "7. Logout\n";
+        cout << "6. Update Passenger\n";
+        cout << "7. Remove Passenger\n";
+        cout << "8. Logout\n";
         cout << "Enter choice: ";
         cin >> choice;
         
