@@ -1734,11 +1734,20 @@ void mainMenu() {
         cin >> choice;
         
         switch(choice) {
-            case 1: PassengerRegistration(); break;
-            case 2: passengerLogin(); break;
-            case 3: adminLoginPanel(); break;
-            case 4: cout << "Thank you for using the system!\n"; break;
-            default: cout << "Invalid choice! Please try again.\n";
+            case 1: 
+            PassengerRegistration(); 
+            break;
+            case 2:
+             passengerLogin(); 
+             break;
+            case 3:
+             adminLoginPanel();
+              break;
+            case 4:
+             cout << "Thank you for using the system!\n"; 
+             break;
+            default:
+             cout << "Invalid choice! Please try again.\n";
         }
     } while(choice != 4);
 }
@@ -1747,7 +1756,6 @@ void mainMenu() {
 
 int main() 
 {
-    
     mainMenu();
     return 0;
 }
