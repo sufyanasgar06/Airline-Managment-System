@@ -116,6 +116,8 @@ void viewFlights(Flight flights[], int flightCount);
 void updateFlight(Flight flights[], int flightCount);
 void deleteFlight(Flight flights[], int &flightCount);
 void viewAllBookings();
+void updatePassengerAdmin();
+void removePassengerAdmin();
 
 // ========== VALIDATION FUNCTIONS ==========
 
@@ -247,39 +249,6 @@ void viewFlights(Flight flights[], int flightCount) {
     cout << "\n======================================\n";
 }
 
-void viewAllBookings() {
-    cout << "\n=== ALL BOOKINGS ===\n";
-    
-    if (bookingCount == 0) {
-        cout << "No bookings found.\n";
-        return;
-    }
-    
-    cout << left << setw(12) << "Booking ID"
-         << setw(15) << "Passenger ID"
-         << setw(10) << "Flight #"
-         << setw(12) << "Travel Date"
-         << setw(10) << "Seats"
-         << setw(12) << "Class"
-         << setw(12) << "Fare Paid($)"
-         << setw(12) << "Status" << "\n";
-    
-    for (int i = 0; i < bookingCount; i++) {
-        string travelDateStr = to_string(bookings[i].travelDate.day) + "/" +
-                              to_string(bookings[i].travelDate.month) + "/" +
-                              to_string(bookings[i].travelDate.year);
-        
-        cout << left << setw(12) << bookings[i].bookingId
-             << setw(15) << bookings[i].passengerId
-             << setw(10) << bookings[i].flightNo
-             << setw(12) << travelDateStr
-             << setw(10) << bookings[i].seatsBooked
-             << setw(12) << bookings[i].classType
-             << setw(12) << fixed << setprecision(2) << bookings[i].farePaid
-             << setw(12) << bookings[i].status << "\n";
-    }
-}
-
 void viewFlightDetailsWithSeats() {
     cout << "\n=== FLIGHT DETAILS WITH SEAT AVAILABILITY ===\n";
     
@@ -327,7 +296,7 @@ void viewFlightDetailsWithSeats() {
     
     cout << "\n--- SEAT AVAILABILITY ---\n";
     cout << left << setw(15) << "CLASS" 
-         << setw(10) << "SEATS" 
+        //  << setw(10) << "SEATS" 
          << setw(15) << "AVAILABLE" 
          << setw(15) << "FARE PER SEAT" << "\n";
     cout << string(55, '-') << "\n";
@@ -337,19 +306,19 @@ void viewFlightDetailsWithSeats() {
     
     cout << left 
          << setw(15) << "Economy"
-         << setw(10) << flight->economySeats
          << setw(15) << flight->economySeats
+        //  << setw(15) << flight->economySeats
          << setw(15) << "$" + to_string(distanceFare * flight->economyFare) << "\n";
     
     cout << left 
          << setw(15) << "Business"
-         << setw(10) << flight->businessSeats
+        //  << setw(10) << flight->businessSeats
          << setw(15) << flight->businessSeats
          << setw(15) << "$" + to_string(distanceFare * flight->businessFare) << "\n";
     
     cout << left 
          << setw(15) << "First Class"
-         << setw(10) << flight->firstClassSeats
+        //  << setw(10) << flight->firstClassSeats
          << setw(15) << flight->firstClassSeats
          << setw(15) << "$" + to_string(distanceFare * flight->firstClassFare) << "\n";
     
@@ -357,7 +326,6 @@ void viewFlightDetailsWithSeats() {
     cout << "Status: " << flight->status << "\n";
     cout << "========================================\n";
 }
-
 // ========== BOOKING FUNCTIONS ==========
 
 void bookFlight() {
@@ -623,7 +591,7 @@ void PassengerRegistration() {
 
 //================Genrate Booking ID====================
 int generateBookingId() {
-    static int lastId = 1;
+    static int lastId = 0;
     return ++lastId;
 }
 
@@ -1241,78 +1209,6 @@ void updatePassword() {
         }
     }
 }
-void updatePassengerAdmin() {
-    int passengerId;
-    cout << "\nEnter Passenger ID to update: ";
-    cin >> passengerId;
-
-    Passenger* passenger = nullptr;
-
-    for (int i = 0; i < passengerCount; i++) {
-        if (passengers[i].id == passengerId) {
-            passenger = &passengers[i];
-            break;
-        }
-    }
-
-    if (!passenger) {
-        cout << "Passenger not found!\n";
-        return;
-    }
-
-    cin.ignore();
-    cout << "Enter New Name: ";
-    cin.getline(passenger->name, 50);
-
-    cout << "Enter New Email: ";
-    cin.getline(passenger->email, 50);
-
-    cout << "Enter New Phone: ";
-    cin.getline(passenger->phone, 20);
-
-    cout << "\nPassenger information updated successfully.\n";
-     savePassengers();
-}
-
-void removePassengerAdmin() {
-    int passengerId;
-    cout << "\nEnter Passenger ID to remove: ";
-    cin >> passengerId;
-
-    int index = -1;
-    for (int i = 0; i < passengerCount; i++) {
-        if (passengers[i].id == passengerId) {
-            index = i;
-            break;
-        }
-    }
-
-    if (index == -1) {
-        cout << "Passenger not found!\n";
-        return;
-    }
-
-    for (int i = 0; i < bookingCount; ) {
-        if (bookings[i].passengerId == passengerId) {
-            for (int j = i; j < bookingCount - 1; j++) {
-                bookings[j] = bookings[j + 1];
-            }
-            bookingCount--;
-        } else {
-            i++;
-        }
-    }
-
-    for (int i = index; i < passengerCount - 1; i++) {
-        passengers[i] = passengers[i + 1];
-    }
-    passengerCount--;
-
-    cout << "\nPassenger and related bookings removed successfully.\n";
-    savePassengers();
-}
-
-
 void updateProfile() {
     if (currentPassengerId == -1) {
         cout << "You must login first!\n";
@@ -1579,16 +1475,12 @@ void adminMenu() {
                 viewAllBookings();
                 break;
             case 6:
-                cout << "\n=== PASSENGER DETAILS ===\n";
-                for (int i = 0; i < passengerCount; i++) {
-                    cout << "ID: " << passengers[i].id 
-                         << " | Name: " << passengers[i].name
-                         << " | Email: " << passengers[i].email
-                         << " | Bookings: " << passengers[i].totalBookings
-                         << " | Spent: $" << passengers[i].totalSpent << endl;
-                }
+                updatePassengerAdmin();
                 break;
             case 7:
+                removePassengerAdmin();
+                break;
+            case 8:
                 cout << "Logging out...\n";
                 loggedIn = false;
                 break;
@@ -1607,7 +1499,7 @@ void adminLoginPanel() {
     cout << "Enter Admin Password: ";
     cin >> password;
     
-    if (username == "admin" && password == "1234") 
+    if (username == "admin@gmail.com" && password == "11223344") 
     {
         cout << "\nLogin successful! Welcome Admin!\n";
      
@@ -1825,6 +1717,110 @@ void deleteFlight(Flight flights[], int &flightCount) {
     cout << "Flight #" << flightNo << " deleted successfully!\n";
     saveFlights();
 }
+
+void updatePassengerAdmin() {
+    int passengerId;
+    cout << "\nEnter Passenger ID to update: ";
+    cin >> passengerId;
+
+    Passenger* passenger = nullptr;
+
+    for (int i = 0; i < passengerCount; i++) {
+        if (passengers[i].id == passengerId) {
+            passenger = &passengers[i];
+            break;
+        }
+    }
+
+    if (!passenger) {
+        cout << "Passenger not found!\n";
+        return;
+    }
+
+    cin.ignore();
+    cout << "Enter New Name: ";
+    cin.getline(passenger->name, 50);
+
+    cout << "Enter New Email: ";
+    cin.getline(passenger->email, 50);
+
+    cout << "Enter New Phone: ";
+    cin.getline(passenger->phone, 20);
+
+    cout << "\nPassenger information updated successfully.\n";
+     savePassengers();
+}
+
+void removePassengerAdmin() {
+    int passengerId;
+    cout << "\nEnter Passenger ID to remove: ";
+    cin >> passengerId;
+
+    int index = -1;
+    for (int i = 0; i < passengerCount; i++) {
+        if (passengers[i].id == passengerId) {
+            index = i;
+            break;
+        }
+    }
+
+    if (index == -1) {
+        cout << "Passenger not found!\n";
+        return;
+    }
+
+    for (int i = 0; i < bookingCount; ) {
+        if (bookings[i].passengerId == passengerId) {
+            for (int j = i; j < bookingCount - 1; j++) {
+                bookings[j] = bookings[j + 1];
+            }
+            bookingCount--;
+        } else {
+            i++;
+        }
+    }
+
+    for (int i = index; i < passengerCount - 1; i++) {
+        passengers[i] = passengers[i + 1];
+    }
+    passengerCount--;
+
+    cout << "\nPassenger and related bookings removed successfully.\n";
+    savePassengers();
+}
+void viewAllBookings() {
+    cout << "\n=== ALL BOOKINGS ===\n";
+    
+    if (bookingCount == 0) {
+        cout << "No bookings found.\n";
+        return;
+    }
+    
+    cout << left << setw(12) << "Booking ID"
+         << setw(15) << "Passenger ID"
+         << setw(10) << "Flight #"
+         << setw(12) << "Travel Date"
+         << setw(10) << "Seats"
+         << setw(12) << "Class"
+         << setw(12) << "Fare Paid($)"
+         << setw(12) << "Status" << "\n";
+    
+    for (int i = 0; i < bookingCount; i++) {
+        string travelDateStr = to_string(bookings[i].travelDate.day) + "/" +
+                              to_string(bookings[i].travelDate.month) + "/" +
+                              to_string(bookings[i].travelDate.year);
+        
+        cout << left << setw(12) << bookings[i].bookingId
+             << setw(15) << bookings[i].passengerId
+             << setw(10) << bookings[i].flightNo
+             << setw(12) << travelDateStr
+             << setw(10) << bookings[i].seatsBooked
+             << setw(12) << bookings[i].classType
+             << setw(12) << fixed << setprecision(2) << bookings[i].farePaid
+             << setw(12) << bookings[i].status << "\n";
+    }
+}
+
 
 //===============================Menues==========================================
 
