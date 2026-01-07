@@ -396,11 +396,22 @@ float calculateFare(const Flight& flight, int seats, const string& classType) {
 }
 
 int generateBookingId() {
-    static int lastId = 1000;
+    static int lastId = 1;
     return ++lastId;
 }
 
-float calculateRefundAmount(const Booking& booking, int daysBeforeTravel) {
+float calculateRefundAmount(const Booking& booking) {
+    time_t now = time(0);
+    tm* currentTime = localtime(&now);
+    Date currentDate;
+    currentDate.day = currentTime->tm_mday;
+    currentDate.month = currentTime->tm_mon + 1;
+    currentDate.year = currentTime->tm_year + 1900;
+
+    int daysBeforeTravel =
+        (booking.travelDate.year - currentDate.year) * 365 +
+        (booking.travelDate.month - currentDate.month) * 30 +
+        (booking.travelDate.day - currentDate.day);
     if (daysBeforeTravel >= 7)
         return booking.farePaid * 0.90;
     else if (daysBeforeTravel >= 3)
@@ -410,6 +421,7 @@ float calculateRefundAmount(const Booking& booking, int daysBeforeTravel) {
     else
         return 0.0;
 }
+
 
 // ========== RECEIPT GENERATION FUNCTION ==========
 
@@ -498,31 +510,9 @@ void generateBookingReceipt(int bookingId) {
     cout << "------------------------------------------------\n";
     cout << "Travel Date: " << formatDate(booking->travelDate) << "\n";
     cout << "Class: " << booking->classType << "\n";
-    cout << "Seats Booked: " << booking->seatsBooked << "\n";
-    cout << "Base Fare per seat: $" << flight->baseFare << "\n";
-    cout << "Distance Rate: $" << (flight->baseFare / 100) << " per km\n";
-    
-    cout << "------------------------------------------------\n";
-    cout << "FARE BREAKDOWN:\n";
-    cout << "------------------------------------------------\n";
-    
-    float distanceFare = flight->distance * (flight->baseFare / 100);
-    float classMultiplier;
-    
-    if (strcmp(booking->classType, "Economy") == 0) classMultiplier = 1.0;
-    else if (strcmp(booking->classType, "Business") == 0) classMultiplier = 2.0;
-    else if (strcmp(booking->classType, "First") == 0) classMultiplier = 3.5;
-    else classMultiplier = 1.0;
-    
-    float farePerSeat = distanceFare * classMultiplier;
-    float totalFare = farePerSeat * booking->seatsBooked;
-    
-    cout << "Distance (" << flight->distance << " km): $" << distanceFare << "\n";
-    cout << "Class Multiplier (" << booking->classType << "): " << classMultiplier << "x\n";
-    cout << "Fare per seat: $" << fixed << setprecision(2) << farePerSeat << "\n";
-    cout << "Number of seats: " << booking->seatsBooked << "\n";
-    cout << "------------------------------------------------\n";
-    cout << "TOTAL FARE: $" << fixed << setprecision(2) << totalFare << "\n\n";
+    cout << "Seats Booked: " << booking->seatsBooked << "\n";    
+    cout << "------------------------------------------------\n";    
+    cout << "TOTAL FARE: $" << fixed << setprecision(2) << booking->farePaid << "\n\n";
     
     cout << "------------------------------------------------\n";
     cout << "BOOKING STATUS: " << booking->status << "\n";
@@ -574,7 +564,7 @@ void viewAvailableFlights() {
         return;
     }
     
-    cout << left << setw(8) << "Flight #"<< setw(12) << "From" << setw(12) << "To"<< setw(10) << "Date"<< setw(8) << "Time"<< setw(8) << "Eco"<< setw(8) << "Bus"<< setw(8) << "First"<< setw(10) << "Fare/km"<< setw(12) << "Status" << "\n";
+    cout << left << setw(8) << "Flight #"<< setw(12) << "From" << setw(12) << "To"<< setw(10) << "Date"<< setw(8) << "Time"<< setw(12) << "Economy"<< setw(12) << "Business"<< setw(12) << "First class"<< setw(12) << "Status" << "\n";
     cout << string(100, '-') << "\n";
     
     bool hasAvailable = false;
@@ -589,7 +579,7 @@ void viewAvailableFlights() {
             string timeStr = to_string(flights[i].departureTime.hour) + ":" +
                            (flights[i].departureTime.minute < 10 ? "0" : "") +
                            to_string(flights[i].departureTime.minute);
-            cout << left << setw(8) << flights[i].flightNo<< setw(12) << flights[i].origin<< setw(12) << flights[i].destination<< setw(10) << dateStr<< setw(8) << timeStr<< setw(8) << ecoSeats<< setw(8) << busSeats<< setw(8) << firstSeats<< setw(10) << "$" + to_string(flights[i].baseFare)<< setw(12) << flights[i].status << "\n";
+            cout << left << setw(8) << flights[i].flightNo<< setw(12) << flights[i].origin<< setw(12) << flights[i].destination<< setw(10) << dateStr<< setw(8) << timeStr<< setw(12) << ecoSeats<< setw(12) << busSeats<< setw(12) << firstSeats<< setw(12) << flights[i].status << "\n";
         }
     }
     
@@ -597,7 +587,6 @@ void viewAvailableFlights() {
         cout << "No available flights at the moment.\n";
     }
     
-    cout << "\nLegend: Eco=Economy, Bus=Business, Fare/km=Base fare per 100 km\n";
 }
 
 
@@ -775,7 +764,7 @@ void bookFlight() {
     displayFareBreakdown(*selectedFlight, seats, classType);
     
     cout << "Total Fare: $" << fixed << setprecision(2) << fare << "\n";
-    
+
     char confirm;
     cout << "\nConfirm booking? (Y/N): ";
     cin >> confirm;
@@ -854,6 +843,7 @@ void bookFlight() {
     
     cout << "\n IMPORTANT: Save your Booking ID: " << newBooking.bookingId << "\n";
     cout << "You can view this receipt anytime from 'View Booking Receipt' in menu.\n";
+    saveBookings();
 }
 
 void viewFlightDetailsWithSeats() {
@@ -892,7 +882,6 @@ void viewFlightDetailsWithSeats() {
     
     cout << "\nRoute: " << flight->origin << " to " << flight->destination << "\n";
     cout << "Distance: " << flight->distance << " km\n";
-    cout << "Base Fare: $" << flight->baseFare << " per 100 km\n";
     
     cout << "\n--- Departure ---\n";
     cout << "Date: " << formatDate(flight->departureDate) << "\n";
@@ -916,19 +905,19 @@ void viewFlightDetailsWithSeats() {
          << setw(15) << "Economy"
          << setw(10) << flight->economySeats
          << setw(15) << flight->economySeats
-         << setw(15) << "$" + to_string(distanceFare * 1.0) << "\n";
+         << setw(15) << "$" + to_string(distanceFare * flight->economyFare) << "\n";
     
     cout << left 
          << setw(15) << "Business"
          << setw(10) << flight->businessSeats
          << setw(15) << flight->businessSeats
-         << setw(15) << "$" + to_string(distanceFare * 2.0) << "\n";
+         << setw(15) << "$" + to_string(distanceFare * flight->businessFare) << "\n";
     
     cout << left 
          << setw(15) << "First Class"
          << setw(10) << flight->firstClassSeats
          << setw(15) << flight->firstClassSeats
-         << setw(15) << "$" + to_string(distanceFare * 3.5) << "\n";
+         << setw(15) << "$" + to_string(distanceFare * flight->firstClassFare) << "\n";
     
     cout << "\nTotal Seats: " << flight->totalSeats << "\n";
     cout << "Status: " << flight->status << "\n";
@@ -944,13 +933,13 @@ void displayPassengerBookings() {
          << setw(10) << "Seats"
          << setw(12) << "Class"
          << setw(12) << "Fare Paid($)"
-         << setw(12) << "Status" << "\n";
+         << setw(15) << "Status" << "\n";
     
     for (int i = 0; i < bookingCount; i++) {
         if (bookings[i].passengerId == currentPassengerId) {
             found = true;
             string travelDateStr = to_string(bookings[i].travelDate.day) + "/" +to_string(bookings[i].travelDate.month) + "/" +to_string(bookings[i].travelDate.year);
-            cout << left << setw(12) << bookings[i].bookingId<< setw(10) << bookings[i].flightNo<< setw(15) << travelDateStr<< setw(10) << bookings[i].seatsBooked<< setw(12) << bookings[i].classType<< setw(12) << fixed << setprecision(2) << bookings[i].farePaid<< setw(12) << bookings[i].status << "\n";
+            cout << left << setw(12) << bookings[i].bookingId<< setw(10) << bookings[i].flightNo<< setw(15) << travelDateStr<< setw(10) << bookings[i].seatsBooked<< setw(12) << bookings[i].classType<< setw(12) << fixed << setprecision(2) << bookings[i].farePaid<< setw(15) << bookings[i].status << "\n";
         }
     }
     if (!found) {
@@ -1360,6 +1349,77 @@ void updatePassword() {
         }
     }
 }
+void updatePassengerAdmin() {
+    int passengerId;
+    cout << "\nEnter Passenger ID to update: ";
+    cin >> passengerId;
+
+    Passenger* passenger = nullptr;
+
+    for (int i = 0; i < passengerCount; i++) {
+        if (passengers[i].id == passengerId) {
+            passenger = &passengers[i];
+            break;
+        }
+    }
+
+    if (!passenger) {
+        cout << "Passenger not found!\n";
+        return;
+    }
+
+    cin.ignore();
+    cout << "Enter New Name: ";
+    cin.getline(passenger->name, 50);
+
+    cout << "Enter New Email: ";
+    cin.getline(passenger->email, 50);
+
+    cout << "Enter New Phone: ";
+    cin.getline(passenger->phone, 20);
+
+    cout << "\nPassenger information updated successfully.\n";
+     savePassengers();
+}
+
+void removePassengerAdmin() {
+    int passengerId;
+    cout << "\nEnter Passenger ID to remove: ";
+    cin >> passengerId;
+
+    int index = -1;
+    for (int i = 0; i < passengerCount; i++) {
+        if (passengers[i].id == passengerId) {
+            index = i;
+            break;
+        }
+    }
+
+    if (index == -1) {
+        cout << "Passenger not found!\n";
+        return;
+    }
+
+    for (int i = 0; i < bookingCount; ) {
+        if (bookings[i].passengerId == passengerId) {
+            for (int j = i; j < bookingCount - 1; j++) {
+                bookings[j] = bookings[j + 1];
+            }
+            bookingCount--;
+        } else {
+            i++;
+        }
+    }
+
+    for (int i = index; i < passengerCount - 1; i++) {
+        passengers[i] = passengers[i + 1];
+    }
+    passengerCount--;
+
+    cout << "\nPassenger and related bookings removed successfully.\n";
+    savePassengers();
+}
+
 
 void updateProfile() {
     if (currentPassengerId == -1) {
@@ -1412,6 +1472,7 @@ void updateProfile() {
             }
         }
     }
+    savePassengers();
 }
 
 // ========== ADMIN FUNCTIONS ==========
@@ -1695,8 +1756,6 @@ void deleteFlight(Flight flights[], int &flightCount) {
     cout << "Flight #" << flightNo << " deleted successfully!\n";
     saveFlights();
 }
-
-
 //============================================================
 
 void showPassengerMenu() {
