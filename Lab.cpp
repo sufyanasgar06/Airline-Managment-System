@@ -7,10 +7,6 @@
 #include <fstream>
 using namespace std;
 
-const int MAX_PASSENGERS = 100;
-const int MAX_FLIGHTS = 100;
-const int MAX_BOOKINGS = 100;
-
 struct Date {
     int day;
     int month;
@@ -66,9 +62,14 @@ struct Booking {
     char status[20]; 
 };
 
-Passenger passengers[MAX_PASSENGERS];
-Flight flights[MAX_FLIGHTS];
-Booking bookings[MAX_BOOKINGS];
+
+int MAX_PASSENGERS = 100;  
+int MAX_FLIGHTS = 100;         
+int MAX_BOOKINGS = 100; 
+
+Passenger* passengers = nullptr; 
+Flight* flights = nullptr;         
+Booking* bookings = nullptr; 
 
 int passengerCount = 0;
 int flightCount = 0;
@@ -341,6 +342,11 @@ void bookFlight() {
         cout << "No flights available to book.\n";
         return;
     }
+       if (bookingCount >= MAX_BOOKINGS) {
+        cout << "Maximum bookings limit reached!\n";
+        cout << "Cannot create new booking.\n";
+        return;
+    }
     
     int flightChoice;
     cout << "\nEnter Flight Number to book (0 to cancel): ";
@@ -538,8 +544,9 @@ void passengerLogin() {
 }
 
 void PassengerRegistration() {
-    if (passengerCount >= MAX_PASSENGERS) {
-        cout << "Maximum passenger limit reached!\n";
+   if (passengerCount >= MAX_PASSENGERS) {
+       cout << "Maximum passenger limit reached!\n";
+        cout << "Cannot register more passengers.\n";
         return;
     }
 
@@ -1270,6 +1277,10 @@ void updateProfile() {
 // ========== File Handling ==========
 
 void savePassengers() {
+        if (passengers == nullptr) {
+        cout << "Error: Passenger array not initialized!\n";
+        return;
+    }
     ofstream out("passengers.txt");
     out << passengerCount << endl;
 
@@ -1307,6 +1318,12 @@ void loadPassengers() {
 }
 
 void saveFlights() {
+
+    if (flights == nullptr) {
+        cout << "Error: Flight array not initialized!\n";
+        return;
+    }
+
     ofstream out("flights.txt");
     out << flightCount << endl;
 
@@ -1391,6 +1408,12 @@ void loadFlights() {
 }
 
 void saveBookings() {
+
+     if (bookings == nullptr) {
+        cout << "Error: Booking array not initialized!\n";
+        return;
+    }
+
     ofstream out("bookings.txt");
     out << bookingCount << endl;
 
@@ -1514,7 +1537,7 @@ void adminLoginPanel() {
 }
 
 void addFlight(Flight flights[], int &flightCount) {
-    if (flightCount >= MAX_FLIGHTS) {
+   if (flightCount >= MAX_FLIGHTS) {
         cout << "Cannot add more flights. Maximum capacity reached.\n";
         return;
     }
@@ -1923,12 +1946,25 @@ void mainMenu() {
 }
 
 // ========== MAIN FUNCTION ==========
-
 int main() 
 {
+    passengers = new Passenger[MAX_PASSENGERS];
+    flights = new Flight[MAX_FLIGHTS];
+    bookings = new Booking[MAX_BOOKINGS];
+
     loadPassengers();
     loadFlights();
     loadBookings();
+    
     mainMenu();
+    
+    delete[] passengers;
+    delete[] flights;
+    delete[] bookings;
+
+    passengers = nullptr;
+    flights = nullptr;
+    bookings = nullptr;
+    
     return 0;
 }
