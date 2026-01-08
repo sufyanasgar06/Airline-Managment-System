@@ -1,1 +1,1 @@
-viewAllBookings
+admin
